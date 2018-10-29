@@ -1,0 +1,22 @@
+###### xshokacmehttp
+  xshokacmehttp:
+    image: extremeshok/acme-http2https:latest
+    environment:
+      - TZ=${TZ}
+      - ACME_DOMAINS=lb-a.extremeshok.com;nws.extremeshok.com,nws-a.extremeshok.com,nws-1.extremeshok.com,nws-b.extremeshok.com,nws-2.extremeshok.com,nws-c.extremeshok.com,nws-3.extremeshok.com,nws-d.extremeshok.com,nws-4.extremeshok.com
+      - ACME_RESTART_CONTAINERS=xshok_baseimagealpine_1;xshok_baseimagealpine_1;xshok_baseimagealpine_1
+      - SKIP_IP_CHECK=no
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - vol-acme:/acme/
+      - vol-certificates:/certs/
+    ports:
+      - 80:80
+    restart: always
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=${SYSCTL_IPV6_DISABLED:-0}
+    networks:
+      network:
+        ipv4_address: ${IPV4_NETWORK:-172.22.1}.200
+        aliases:
+          - xshokacmehttp
