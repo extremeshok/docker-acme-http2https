@@ -17,6 +17,7 @@ ACME_DOMAINS=www.domain.com,domain.com;my.otherdomain.net;www.randomdomain.com
 ### List of docker containers to restart, assume docker socket is connected
 ACME_RESTART_CONTAINERS=xshok_baseimagealpine_1;xshok_baseimagealpine_2;xshok_baseimagealpine_3
 
+### Disable checking of external IP connectivity
 SKIP_IP_CHECK=no
 
 ### Use an external SMTP server, default will use sendmail
