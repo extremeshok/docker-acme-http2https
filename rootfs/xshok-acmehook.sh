@@ -91,22 +91,6 @@ invalid_challenge() {
   #   name (CN).
   # - RESPONSE
   #   The response that the verification server returned
-}
-
-request_failure() {
-  local STATUSCODE="${1}" REASON="${2}" REQTYPE="${3}"
-  # response code that does not start with '2'. Useful to alert admins
-  # about problems with requests.
-  #
-  # Parameters:
-  # - STATUSCODE
-  #   The HTML status code that originated the error.
-  # - REASON
-  #   The specified reason for the error.
-  # - REQTYPE
-  #   The kind of request that was made (GET, POST...)
-
-  local DOMAIN="${1}"
   #TODAYS_DATE="${2}" SENDER="${3}" RECIPIENT="${4}"
   email_to="${NOTIFY}"
   email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
@@ -123,12 +107,51 @@ request_failure() {
       #Email headerquota
       echo "From: ${email_to}"
       echo "To: ${email_from}"
-      echo "Subject: eXtremeSHOK.com :: Certificate Request Failure :: ${DOMAIN}"
+      echo "Subject: eXtremeSHOK.com :: Certificate Failure :: ${DOMAIN}"
       echo "Content-Type: text/plain; charset=\"UTF-8\""
       echo "" #must be a blank line
       echo "This email was automatically sent by the acme server."
       echo ""
       echo "A certificate request failure for the domain: ${DOMAIN}"
+      echo ""
+      echo "${RESPONSE}"
+      echo ""
+      echo "Please confirm certificate is working as expected."
+    } | $sendmail_app
+  fi
+}
+
+request_failure() {
+  local STATUSCODE="${1}" REASON="${2}" REQTYPE="${3}"
+  # response code that does not start with '2'. Useful to alert admins
+  # about problems with requests.
+  #
+  # Parameters:
+  # - STATUSCODE
+  #   The HTML status code that originated the error.
+  # - REASON
+  #   The specified reason for the error.
+  # - REQTYPE
+  #   The kind of request that was made (GET, POST...)
+  email_to="${NOTIFY}"
+  email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
+  if [[ $NOTIFY =~ [@] ]]; then
+    if [ -f "/etc/msmtprc" ] ; then
+      echo "Using Remote SMTP"
+      sendmail_app="msmtp --read-envelope-from --read-recipients --remove-bcc-headers=off -d"
+    elif [ "$(command -v sendmail)" != "" ] ; then
+      echo "Using sendmail"
+      sendmail_app="sendmail -t" #-t set options from header
+    fi
+    echo "Sending Email to: ${email_to}"
+    {
+      #Email headerquota
+      echo "From: ${email_to}"
+      echo "To: ${email_from}"
+      echo "Subject: eXtremeSHOK.com :: Certificate Request Failure"
+      echo "Content-Type: text/plain; charset=\"UTF-8\""
+      echo "" #must be a blank line
+      echo "This email was automatically sent by the acme server."
       echo ""
       echo "Status code: ${STATUSCODE} | Request Type: ${REQTYPE}"
       echo "${REASON}"
