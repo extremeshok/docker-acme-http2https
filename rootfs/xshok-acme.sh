@@ -79,20 +79,29 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     if [ -n "${RSYNC_COMMAND}" ]; then
       # rsync has changes
       echo "$RSYNC_COMMAND"
-      if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
-        container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
-        for container in $container_array ; do
-          #container="${container//,/ }"
-          # prevent empty domains
-          if [[ ! -z "${container// }" ]]; then
-            if DOCKER_COMMAND=$(docker restart "$container") ; then
-              echo "-- Restarted Docker Container: $container"
-            else
-              echo "Error: Restarting Docker Container"
-              echo "$DOCKER_COMMAND"
+      if [[ ! -z ${ACME_RESTART_CONTAINERS} ]]; then
+        if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
+          container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
+          for container in $container_array ; do
+            #container="${container//,/ }"
+            # prevent empty domains
+            if [[ ! -z "${container// }" ]]; then
+              if DOCKER_COMMAND=$(docker restart "$container") ; then
+                echo "-- Restarted Docker Container: $container"
+              else
+                echo "Error: Restarting Docker Container"
+                echo "$DOCKER_COMMAND"
+              fi
             fi
+          done
+        else
+          if DOCKER_COMMAND=$(docker restart "$ACME_RESTART_CONTAINERS") ; then
+            echo "-- Restarted Docker Container: $ACME_RESTART_CONTAINERS"
+          else
+            echo "Error: Restarting Docker Container"
+            echo "$DOCKER_COMMAND"
           fi
-        done
+        fi
       fi
     fi
   fi
