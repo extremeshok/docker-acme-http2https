@@ -81,7 +81,6 @@ unchanged_cert() {
 
 invalid_challenge() {
   local DOMAIN="${1}" RESPONSE="${2}"
-
   # This hook is called if the challenge response has failed, so domain
   # owners can be aware and act accordingly.
   #
@@ -91,7 +90,6 @@ invalid_challenge() {
   #   name (CN).
   # - RESPONSE
   #   The response that the verification server returned
-  #TODAYS_DATE="${2}" SENDER="${3}" RECIPIENT="${4}"
   email_to="${NOTIFY}"
   email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
   if [[ $NOTIFY =~ [@] ]]; then
