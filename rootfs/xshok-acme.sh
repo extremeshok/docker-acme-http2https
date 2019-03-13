@@ -79,7 +79,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     if [ -n "${RSYNC_COMMAND}" ]; then
       # rsync has changes
       echo "$RSYNC_COMMAND"
-      if [[ ! -z ${ACME_RESTART_CONTAINERS} ]]; then
+      if [[ ! -z ${ACME_RESTART_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
         if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
           container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
           for container in $container_array ; do

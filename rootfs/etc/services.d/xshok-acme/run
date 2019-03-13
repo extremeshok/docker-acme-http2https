@@ -1,2 +1,8 @@
 #!/usr/bin/with-contenv sh
+
+while ! bash /xshok-init.sh ; do
+  echo "Waiting for init to complete"
+  sleep 5s
+done
+
 exec /bin/bash /xshok-acme.sh $ACME_DOMAINS

@@ -105,24 +105,51 @@ request_failure() {
   #   The specified reason for the error.
   # - REQTYPE
   #   The kind of request that was made (GET, POST...)
+
+  local DOMAIN="${1}"
+  #TODAYS_DATE="${2}" SENDER="${3}" RECIPIENT="${4}"
+  email_to="${NOTIFY}"
+  email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
+  if [[ $NOTIFY =~ [@] ]]; then
+    if [ -f "/etc/msmtprc" ] ; then
+      echo "Using Remote SMTP"
+      sendmail_app="msmtp --read-envelope-from --read-recipients --remove-bcc-headers=off -d"
+    elif [ "$(command -v sendmail)" != "" ] ; then
+      echo "Using sendmail"
+      sendmail_app="sendmail -t" #-t set options from header
+    fi
+    echo "Sending Email to: ${email_to}"
+    {
+      #Email headerquota
+      echo "From: ${email_to}"
+      echo "To: ${email_from}"
+      echo "Subject: eXtremeSHOK.com :: Certificate Request Failure :: ${DOMAIN}"
+      echo "Content-Type: text/plain; charset=\"UTF-8\""
+      echo "" #must be a blank line
+      echo "This email was automatically sent by the acme server."
+      echo ""
+      echo "A certificate request failure for the domain: ${DOMAIN}"
+      echo ""
+      echo "Status code: ${STATUSCODE} | Request Type: ${REQTYPE}"
+      echo "${REASON}"
+      echo ""
+      echo "Please confirm certificate is working as expected."
+    } | $sendmail_app
+  fi
 }
 
 send_notification() {
   local DOMAIN="${1}"
   #TODAYS_DATE="${2}" SENDER="${3}" RECIPIENT="${4}"
-  send_email="yes"
-  email_to="admin@extremeshok.com"
-  email_from="admin@extremeshok.com"
-  if [ "$send_email" == "yes" ] ; then
-    if [ "$(command -v msmtp)" != "" ] ; then
-      echo "msmtp detected"
+  email_to="${NOTIFY}"
+  email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
+  if [[ $NOTIFY =~ [@] ]]; then
+    if [ -f "/etc/msmtprc" ] ; then
+      echo "Using Remote SMTP"
       sendmail_app="msmtp --read-envelope-from --read-recipients --remove-bcc-headers=off -d"
     elif [ "$(command -v sendmail)" != "" ] ; then
-      echo "sendmail detected"
+      echo "Using sendmail"
       sendmail_app="sendmail -t" #-t set options from header
-    else
-      echo "WARNING: No email client detected, discarding email"
-      sendmail_app="> /dev/null"
     fi
     echo "Sending Email to: ${email_to}"
     {
