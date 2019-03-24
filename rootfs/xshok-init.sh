@@ -4,7 +4,7 @@ if [ ! -z "$NOTIFY" ] && [ ! -z "$SMTP_HOST" ] && [ ! -z "$SMTP_USER" ] && [ ! -
   # Generating Remote SMTP config
 cat << EOF >> /etc/msmtprc
 defaults
-port 587
+port ${SMTP_PORT:-587}
 tls on
 tls_trust_file /etc/ssl/certs/ca-certificates.crt
 
