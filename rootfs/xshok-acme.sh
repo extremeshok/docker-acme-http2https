@@ -27,16 +27,17 @@ if [[ ! "${SKIP_IP_CHECK}" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
   # shellcheck disable=SC2002
   UUID="xshok-$(date +%s)"
   echo "$UUID" > /var/www/acme-challenge/uuid.html
+  HTTPONLINE="false";
   until [[ ! -z ${HTTPONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
     echo "Testing Localhost"
     if curl --silent "http://127.0.01/" >/dev/null 2>&1 ; then
-      echo "Testing IPv4 with UUID: $IPV4"
+      echo "Testing IPv4 with UUID: ${IPV4}"
       UUID_RESULT=$(curl -L4s "http://${IPV4}/.well-known/acme-challenge/uuid.html")
       if [ "$UUID" == "$UUID_RESULT" ] ; then
         HTTPONLINE="true";
       fi
     fi
-    [[ ! -z ${HTTPONLINE} ]] && sleep 1
+    [[ ! -z ${HTTPONLINE} ]] && sleep 3
     TRY=$((TRY+1))
   done
 else
@@ -59,6 +60,25 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
       if [[ $ACME_DOMAINS =~ [\,\;] ]]; then
         domain_array=$(echo "$ACME_DOMAINS" | tr ";" "\\n")
         for domain in $domain_array ; do
+          #check the domains can be accessed, prevents wasted acme calls which will fail
+          domain_micro_array=$(echo "$domain" | tr "," "\\n")
+          for domain_micro in $domain_micro_array ; do
+            UUID="xshok-$(date +%s)"
+            echo "$UUID" > /var/www/acme-challenge/uuid.html
+            DOMAINONLINE="false"
+            until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
+              echo "Testing Localhost"
+              if curl --silent "http://127.0.01/" >/dev/null 2>&1 ; then
+                echo "Testing Domain with UUID: ${domain_micro}"
+                UUID_RESULT=$(curl -L4s "http://${domain_micro}/.well-known/acme-challenge/uuid.html")
+                if [ "$UUID" == "$UUID_RESULT" ] ; then
+                  DOMAINONLINE="true";
+                fi
+              fi
+              [[ ! -z ${DOMAINONLINE} ]] && sleep 3
+              TRY=$((TRY+1))
+            done
+          done
           domain="${domain//,/ }"
           # prevent empty domains
           if [[ ! -z "${domain// }" ]]; then

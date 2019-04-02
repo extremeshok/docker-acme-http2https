@@ -7,7 +7,7 @@ View **docker-compose-sample.yml** in the source repository for usage
 Alpine latest with s6
 Nginx
 dehydrated
-
+check the domains can be accessed before doing acme, prevents wasted acme calls which will fail
 
 ## ENVIROMENT VARIBLES
 
