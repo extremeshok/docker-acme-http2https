@@ -50,6 +50,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     openssl dhparam -out /acme/certs/dhparam.pem 4096
   elif ! grep -q "BEGIN DH PARAMETERS" /certs/dhparam.pem || ! grep -q "END DH PARAMETERS" /certs/dhparam.pem ; then
     echo "========== Generating New 4096 dhparam =========="
+    rm -f /acme/certs/dhparam.pem
     openssl dhparam -out /acme/certs/dhparam.pem 4096
   fi
   echo "========== DEHYDRATED RUNNING =========="
