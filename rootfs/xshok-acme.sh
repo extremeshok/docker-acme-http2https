@@ -21,6 +21,11 @@ get_ipv4(){
   echo "${IPV4}"
 }
 
+if [ -f "/acme/lock" ] ; then
+  echo "Removing lock"
+  rm -f /acme/lock
+fi
+
 if [[ ! "${SKIP_IP_CHECK}" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
   echo "========== Testing IPv4 webserver access =========="
   IPV4=$(get_ipv4)
