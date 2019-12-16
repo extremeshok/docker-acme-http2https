@@ -26,7 +26,7 @@ RUN \
 
 RUN \
   echo "**** install dehydrated ****" \
-  && THISVERSION="$(curl --silent "https://api.github.com/repos/lukas2511/dehydrated/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')" \
+  && THISVERSION="$(curl --silent -L "https://api.github.com/repos/lukas2511/dehydrated/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')" \
   && echo "$THISVERSION" \
   && THISVERSION="$(echo "$THISVERSION" | sed 's/v//')" \
   && curl --silent -o /tmp/dehydrated.tar.gz -L \
