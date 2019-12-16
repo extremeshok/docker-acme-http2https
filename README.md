@@ -14,7 +14,7 @@ check the domains can be accessed before doing acme, prevents wasted acme calls 
 
 ## ENVIROMENT VARIBLES
 
-### List of certificates
+### List of certificates 
 ACME_DOMAINS=www.domain.com,domain.com;my.otherdomain.net;www.randomdomain.com
 
 ### List of docker containers to restart, assume docker socket is connected
