@@ -136,12 +136,9 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
   if [ -d "/var/www/vhosts" ] ; then
     echo "========== Syncing acme certificates to /var/www/vhosts =========="
     while IFS= read -r -d '' vhost_dir; do
-
       vhost="${vhost_dir##*/}"
-      echo "${vhost_dir} == ${vhost}"
-
+      #echo "${vhost_dir} == ${vhost}"
       if [ -f "/acme/certs/${vhost}/privkey.pem" ] && [ -f "/acme/certs/${vhost}/fullchain.pem" ] ; then
-        echo " --- privkey.pem | fullchain.pem"
         if RSYNC_COMMAND=$(rsync -W -p -t -i -r --copy-links --no-compress --include="privkey.pem" --include="fullchain.pem" --exclude="*" "/acme/certs/${vhost}/" "/var/www/vhosts/${vhost}/certs/") ; then
           if [ -n "${RSYNC_COMMAND}" ]; then
             echo "$RSYNC_COMMAND"

@@ -34,7 +34,6 @@ RUN echo "**** install dehydrated from git ****" \
 COPY rootfs/ /
 
 RUN echo "**** configure ****" \
-  && mkdir -p /certs \
   && mkdir -p /acme/certs \
   && mkdir -p /acme/accounts \
   && mkdir -p /var/www/acme-challenge \
