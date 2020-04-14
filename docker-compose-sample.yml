@@ -13,6 +13,7 @@ services:
       - SMTP_USER=user@domain.com
       - SMTP_PASS=securepass
       - NOTIFY=admin@domain.com
+      - GENERATE_DHPARAM=yes
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:rw
       - vol-acme:/acme/:rw

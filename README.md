@@ -9,7 +9,7 @@ View **docker-compose-sample.yml** in the source repository for usage
 # features
 Alpine latest with s6
 Nginx
-dehydrated ACME client 
+dehydrated ACME client
 dehydrated is updated on container start
 check the domains can be accessed before doing acme, prevents wasted acme calls which will fail
 
@@ -20,6 +20,15 @@ ACME_DOMAINS=www.domain.com,domain.com;my.otherdomain.net;www.randomdomain.com
 
 ### List of docker containers to restart, assume docker socket is connected
 ACME_RESTART_CONTAINERS=xshok_baseimagealpine_1;xshok_baseimagealpine_2;xshok_baseimagealpine_3
+Note: docker socket needs to be mapped, ie.
+```
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock:rw
+```
+
+### Enable generation of 4096bit DHPARAM
+GENERATE_DHPARAM=yes
+Note: will take a long time
 
 ### Disable checking of external IP connectivity
 SKIP_IP_CHECK=no

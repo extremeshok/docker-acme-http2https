@@ -50,7 +50,8 @@ else
 fi
 
 if [[ ! -z ${HTTPONLINE} ]]  ; then
-  if [ ! -f "/acme/certs/dhparam.pem" ] ; then
+
+  if [ ! -f "/acme/certs/dhparam.pem" ] && [ "$GENERATE_DHPARAM" == "yes" ] ; then
     echo "========== Generating 4096 dhparam =========="
     openssl dhparam -out /acme/certs/dhparam.pem 4096
     echo "Completed"
@@ -60,6 +61,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     openssl dhparam -out /acme/certs/dhparam.pem 4096
     echo "Completed"
   fi
+  
   echo "========== DEHYDRATED RUNNING =========="
   dehydrated --register --accept-terms
   if [ -f "/acme/domain_list.txt" ] ; then
