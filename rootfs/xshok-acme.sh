@@ -1,4 +1,9 @@
 #!/bin/bash
+################################################################################
+# This is property of eXtremeSHOK.com
+# You are free to use, modify and distribute, however you may not remove this notice.
+# Copyright (c) Adrian Jon Kriel :: admin@extremeshok.com
+################################################################################
 
 # Place a file "/acme/domain_list.txt" with a list of domains
 # oe set the env varible "ACME_DOMAINS"
@@ -114,39 +119,15 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
   echo "-- Moved unused certificate files to the archive directory"
   dehydrated --cleanup
 
+  RESTART_DOCKER="no"
+
   ## /certs
   if [ -d "/certs" ] ; then
     echo "========== Syncing acme certificates to /certs =========="
-    if RSYNC_COMMAND=$(rsync -W -h -r -L -p -t -g -o -i --prune-empty-dirs --delete --delete-excluded --no-compress --exclude=".*" --exclude="cert-*.pem" --exclude="chain-*.pem" --exclude="fullchain-*.pem" --exclude="privkey-*.pem" --exclude="cert-*.csr" "/acme/certs/" "/certs/") ; then
+    if RSYNC_COMMAND=$(rsync -W -r -p -t -i --copy-links --prune-empty-dirs --delete --delete-excluded --no-compress --exclude=".*" --exclude="cert-*.pem" --exclude="chain-*.pem" --exclude="fullchain-*.pem" --exclude="privkey-*.pem" --exclude="cert-*.csr" "/acme/certs/" "/certs/") ; then
       if [ -n "${RSYNC_COMMAND}" ]; then
-        # rsync has changes
         echo "$RSYNC_COMMAND"
-        ## RESTART DOCKER CONTAINERS :: BEGIN
-        if [[ ! -z ${ACME_RESTART_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
-          if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
-            container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
-            for container in $container_array ; do
-              #container="${container//,/ }"
-              # prevent empty domains
-              if [[ ! -z "${container// }" ]]; then
-                if DOCKER_COMMAND=$(docker restart "$container") ; then
-                  echo "-- Restarted Docker Container: $container"
-                else
-                  echo "Error: Restarting Docker Container"
-                  echo "$DOCKER_COMMAND"
-                fi
-              fi
-            done
-          else
-            if DOCKER_COMMAND=$(docker restart "$ACME_RESTART_CONTAINERS") ; then
-              echo "-- Restarted Docker Container: $ACME_RESTART_CONTAINERS"
-            else
-              echo "Error: Restarting Docker Container"
-              echo "$DOCKER_COMMAND"
-            fi
-          fi
-        fi
-        ## RESTART DOCKER CONTAINERS :: EMD
+        RESTART_DOCKER="yes"
       fi
     fi
   fi
@@ -156,11 +137,58 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     echo "========== Syncing acme certificates to /var/www/vhosts =========="
     while IFS= read -r -d '' vhost_dir; do
 
-      echo "-- ${vhost_dir}"
+      vhost="${vhost_dir##*/}"
+      echo "${vhost_dir} == ${vhost}"
 
-    done < <(find "/var/www/vhosts" -mindepth 1 -type d -print0)  #dirs
+      if [ -f "/acme/certs/${vhost}/privkey.pem" ] && [ -f "/acme/certs/${vhost}/fullchain.pem" ] ; then
+        echo " --- privkey.pem | fullchain.pem"
+        if RSYNC_COMMAND=$(rsync -W -p -t -i -r --copy-links --no-compress --include="privkey.pem" --include="fullchain.pem" --exclude="*" "/acme/certs/${vhost}/" "/var/www/vhosts/${vhost}/certs/") ; then
+          if [ -n "${RSYNC_COMMAND}" ]; then
+            echo "$RSYNC_COMMAND"
+            RESTART_DOCKER="yes"
+          fi
+        fi
+      fi
+      if [ -f "/acme/certs/dhparam.pem" ] ; then
+        if RSYNC_COMMAND=$(rsync -W -p -t -i -r --copy-links --no-compress "/acme/certs/dhparam.pem" "/var/www/vhosts/${vhost}/certs/dhparam.pem") ; then
+          if [ -n "${RSYNC_COMMAND}" ]; then
+            echo "$RSYNC_COMMAND"
+            RESTART_DOCKER="yes"
+          fi
+        fi
+      fi
+    done < <(find "/var/www/vhosts" -mindepth 1 -maxdepth 1 -type d -print0)  #dirs
   fi
 
+  ## RESTART DOCKER CONTAINERS :: BEGIN
+  if [ "$RESTART_DOCKER" == "yes" ] ; then
+    if [[ ! -z ${ACME_RESTART_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
+      echo "========== Restarting Docker Containers =========="
+      if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
+        container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
+        for container in $container_array ; do
+          #container="${container//,/ }"
+          # prevent empty domains
+          if [[ ! -z "${container// }" ]]; then
+            if DOCKER_COMMAND=$(docker restart "$container") ; then
+              echo "-- Restarted Docker Container: $container"
+            else
+              echo "Error: Restarting Docker Container"
+              echo "$DOCKER_COMMAND"
+            fi
+          fi
+        done
+      else
+        if DOCKER_COMMAND=$(docker restart "$ACME_RESTART_CONTAINERS") ; then
+          echo "-- Restarted Docker Container: $ACME_RESTART_CONTAINERS"
+        else
+          echo "Error: Restarting Docker Container"
+          echo "$DOCKER_COMMAND"
+        fi
+      fi
+    fi
+  fi
+  ## RESTART DOCKER CONTAINERS :: EMD
 
   echo "========== SLEEPING for 1 day and watching /acme/domain_list.txt =========="
   if [ ! -f "/acme/domain_list.txt" ] ; then
