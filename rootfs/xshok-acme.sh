@@ -114,45 +114,58 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
   echo "-- Moved unused certificate files to the archive directory"
   dehydrated --cleanup
 
-  echo "========== Syncing acme certificates to /certs =========="
-  if RSYNC_COMMAND=$(rsync -W -h -r -L -p -t -g -o -i --prune-empty-dirs --delete --delete-excluded --no-compress --exclude=".*" --exclude="cert-*.pem" --exclude="chain-*.pem" --exclude="fullchain-*.pem" --exclude="privkey-*.pem" --exclude="cert-*.csr" "/acme/certs/" "/certs/") ; then
-    if [ -n "${RSYNC_COMMAND}" ]; then
-      # rsync has changes
-      echo "$RSYNC_COMMAND"
-      ## RESTART DOCKER CONTAINERS :: BEGIN
-      if [[ ! -z ${ACME_RESTART_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
-        if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
-          container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
-          for container in $container_array ; do
-            #container="${container//,/ }"
-            # prevent empty domains
-            if [[ ! -z "${container// }" ]]; then
-              if DOCKER_COMMAND=$(docker restart "$container") ; then
-                echo "-- Restarted Docker Container: $container"
-              else
-                echo "Error: Restarting Docker Container"
-                echo "$DOCKER_COMMAND"
+  ## /certs
+  if [ -d "/certs" ] ; then
+    echo "========== Syncing acme certificates to /certs =========="
+    if RSYNC_COMMAND=$(rsync -W -h -r -L -p -t -g -o -i --prune-empty-dirs --delete --delete-excluded --no-compress --exclude=".*" --exclude="cert-*.pem" --exclude="chain-*.pem" --exclude="fullchain-*.pem" --exclude="privkey-*.pem" --exclude="cert-*.csr" "/acme/certs/" "/certs/") ; then
+      if [ -n "${RSYNC_COMMAND}" ]; then
+        # rsync has changes
+        echo "$RSYNC_COMMAND"
+        ## RESTART DOCKER CONTAINERS :: BEGIN
+        if [[ ! -z ${ACME_RESTART_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
+          if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
+            container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
+            for container in $container_array ; do
+              #container="${container//,/ }"
+              # prevent empty domains
+              if [[ ! -z "${container// }" ]]; then
+                if DOCKER_COMMAND=$(docker restart "$container") ; then
+                  echo "-- Restarted Docker Container: $container"
+                else
+                  echo "Error: Restarting Docker Container"
+                  echo "$DOCKER_COMMAND"
+                fi
               fi
-            fi
-          done
-        else
-          if DOCKER_COMMAND=$(docker restart "$ACME_RESTART_CONTAINERS") ; then
-            echo "-- Restarted Docker Container: $ACME_RESTART_CONTAINERS"
+            done
           else
-            echo "Error: Restarting Docker Container"
-            echo "$DOCKER_COMMAND"
+            if DOCKER_COMMAND=$(docker restart "$ACME_RESTART_CONTAINERS") ; then
+              echo "-- Restarted Docker Container: $ACME_RESTART_CONTAINERS"
+            else
+              echo "Error: Restarting Docker Container"
+              echo "$DOCKER_COMMAND"
+            fi
           fi
         fi
+        ## RESTART DOCKER CONTAINERS :: EMD
       fi
-      ## RESTART DOCKER CONTAINERS :: EMD
     fi
   fi
 
+  ## /var/www/vhosts
+  if [ -d "/var/www/vhosts" ] ; then
+    echo "========== Syncing acme certificates to /var/www/vhosts =========="
+    while IFS= read -r -d '' vhost_dir; do
+
+      echo "-- ${vhost_dir}"
+
+    done < <(find "/var/www/vhosts" -mindepth 1 -type d -print0)  #dirs
+  fi
+
+
+  echo "========== SLEEPING for 1 day and watching /acme/domain_list.txt =========="
   if [ ! -f "/acme/domain_list.txt" ] ; then
     touch "/acme/domain_list.txt"
   fi
-
-  echo "========== SLEEPING for 1 day and watching /acme/domain_list.txt =========="
   inotifywait -e modify --timeout 86400 /acme/domain_list.txt
   sleep 30
 else
