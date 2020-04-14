@@ -51,17 +51,18 @@ fi
 
 if [[ ! -z ${HTTPONLINE} ]]  ; then
 
-  if [ ! -f "/acme/certs/dhparam.pem" ] && [ "$GENERATE_DHPARAM" == "yes" ] ; then
-    echo "========== Generating 4096 dhparam =========="
-    openssl dhparam -out /acme/certs/dhparam.pem 4096
-    echo "Completed"
-  elif ! grep -q "BEGIN DH PARAMETERS" /certs/dhparam.pem || ! grep -q "END DH PARAMETERS" /certs/dhparam.pem ; then
-    echo "========== Generating New 4096 dhparam =========="
-    rm -f /acme/certs/dhparam.pem
-    openssl dhparam -out /acme/certs/dhparam.pem 4096
-    echo "Completed"
+  if [ "$GENERATE_DHPARAM" == "yes" ] ; then
+    if [ ! -f "/acme/certs/dhparam.pem" ] ; then
+      echo "========== Generating 4096 dhparam =========="
+      openssl dhparam -out /acme/certs/dhparam.pem 4096
+      echo "Completed"
+    elif ! grep -q "BEGIN DH PARAMETERS" /certs/dhparam.pem || ! grep -q "END DH PARAMETERS" /certs/dhparam.pem ; then
+      echo "========== Generating New 4096 dhparam =========="
+      rm -f /acme/certs/dhparam.pem
+      openssl dhparam -out /acme/certs/dhparam.pem 4096
+      echo "Completed"
+    fi
   fi
-  
   echo "========== DEHYDRATED RUNNING =========="
   dehydrated --register --accept-terms
   if [ -f "/acme/domain_list.txt" ] ; then
