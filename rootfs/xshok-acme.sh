@@ -148,6 +148,10 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     fi
   fi
 
+  if [ ! -f "/acme/domain_list.txt" ] ; then
+    touch "/acme/domain_list.txt"
+  fi
+
   echo "========== SLEEPING for 1 day and watching /acme/domain_list.txt =========="
   inotifywait -e modify --timeout 86400 /acme/domain_list.txt
   sleep 30
