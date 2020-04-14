@@ -5,4 +5,7 @@ while ! bash /xshok-init.sh ; do
   sleep 5s
 done
 
-exec /bin/bash /xshok-acme.sh $ACME_DOMAINS
+while true; do
+  /bin/bash /xshok-acme.sh $ACME_DOMAINS
+  sleep 60
+done

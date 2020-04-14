@@ -18,6 +18,7 @@ RUN echo "**** install bash runtime packages ****" \
     coreutils \
     curl \
     git \
+    inotify-tools \
     openssl \
     rsync \
     tzdata
@@ -28,18 +29,6 @@ RUN echo "**** install dehydrated from git ****" \
   && git clone --depth=1 https://github.com/dehydrated-io/dehydrated.git \
   && ln -s /usr/local/src/dehydrated/dehydrated /sbin/dehydrated \
   && chmod 777 /sbin/dehydrated
-
-# RUN echo "**** install dehydrated ****" \
-#   && THISVERSION="$(curl --silent -L "https://api.github.com/repos/dehydrated-io/dehydrated/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')" \
-#   && echo "$THISVERSION" \
-#   && THISVERSION="$(echo "$THISVERSION" | sed 's/v//')" \
-#   && curl --silent -o /tmp/dehydrated.tar.gz -L \
-#    "https://github.com/dehydrated-io/dehydrated/releases/download/v${THISVERSION}/dehydrated-${THISVERSION}.tar.gz" \
-#   && mkdir -p /tmp/dehydrated \
-#   && tar xfz /tmp/dehydrated.tar.gz -C /tmp/dehydrated \
-#   && cp -f /tmp/dehydrated/dehydrated*/dehydrated /sbin/dehydrated \
-#   && chmod 777 /sbin/dehydrated \
-#   && rm -f /tmp/dehydrated.tar.gz
 
 # add local files
 COPY rootfs/ /

@@ -49,20 +49,26 @@ else
   HTTPONLINE="true";
 fi
 
-if [[ ! -z ${HTTPONLINE} ]]  ; then
-
-  if [ "$GENERATE_DHPARAM" == "yes" ] ; then
-    if [ ! -f "/acme/certs/dhparam.pem" ] ; then
-      echo "========== Generating 4096 dhparam =========="
-      openssl dhparam -out /acme/certs/dhparam.pem 4096
-      echo "Completed"
-    elif ! grep -q "BEGIN DH PARAMETERS" /certs/dhparam.pem || ! grep -q "END DH PARAMETERS" /certs/dhparam.pem ; then
-      echo "========== Generating New 4096 dhparam =========="
-      rm -f /acme/certs/dhparam.pem
-      openssl dhparam -out /acme/certs/dhparam.pem 4096
-      echo "Completed"
-    fi
+## DHPARAM
+if [ "$GENERATE_DHPARAM" == "yes" ] ; then
+  if [ ! -f "/acme/certs/dhparam.pem" ] ; then
+    echo "========== Generating 4096 dhparam =========="
+    openssl dhparam -out /acme/certs/dhparam.pem 4096
+    echo "Completed"
+  elif ! grep -q "BEGIN DH PARAMETERS" /certs/dhparam.pem || ! grep -q "END DH PARAMETERS" /certs/dhparam.pem ; then
+    echo "========== Generating New 4096 dhparam =========="
+    rm -f /acme/certs/dhparam.pem
+    openssl dhparam -out /acme/certs/dhparam.pem 4096
+    echo "Completed"
   fi
+fi
+
+if [[ ! -z ${HTTPONLINE} ]]  ; then
+  ## UPDATE
+  echo "========== UPDATE DEHYDRATED =========="
+  cd /usr/local/src/dehydrated || exit
+  git pull --depth=1
+  ## DEHYDRATED
   echo "========== DEHYDRATED RUNNING =========="
   dehydrated --register --accept-terms
   if [ -f "/acme/domain_list.txt" ] ; then
@@ -113,6 +119,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     if [ -n "${RSYNC_COMMAND}" ]; then
       # rsync has changes
       echo "$RSYNC_COMMAND"
+      ## RESTART DOCKER CONTAINERS :: BEGIN
       if [[ ! -z ${ACME_RESTART_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
         if [[ $ACME_RESTART_CONTAINERS =~ [\,\;] ]]; then
           container_array=$(echo "$ACME_RESTART_CONTAINERS" | tr ";" "\\n")
@@ -137,11 +144,13 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
           fi
         fi
       fi
+      ## RESTART DOCKER CONTAINERS :: EMD
     fi
   fi
 
-  echo "========== SLEEPING for 1 day =========="
-  sleep 1d
+  echo "========== SLEEPING for 1 day and watching /acme/domain_list.txt =========="
+  inotifywait -e modify --timeout 86400 /acme/domain_list.txt
+  sleep 30
 else
   echo "========== HTTP NOT online, retry in 1 hour =========="
   sleep 1h

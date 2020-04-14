@@ -12,6 +12,7 @@ Nginx
 dehydrated ACME client
 dehydrated is updated on container start
 check the domains can be accessed before doing acme, prevents wasted acme calls which will fail
+After acme client has run, sleep for 1 day and watching /acme/domain_list.txt for changes
 
 ## ENVIROMENT VARIBLES
 
@@ -42,3 +43,14 @@ SMTP_PASS=securepass
 
 ### Notify via email on failure/success
  NOTIFY=admin@domain.com
+
+
+# example /acme/domain_list.txt
+1 certificate per line, first value is the "root aka certificate name"
+```
+example.org
+example.com www.example.com
+example.net www.example.net wiki.example.net
+service.example.com *.service.example.com
+eggs.example.com *.ham.example.com
+```
