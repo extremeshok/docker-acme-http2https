@@ -2,46 +2,49 @@ FROM extremeshok/baseimage-alpine:latest AS BUILD
 
 LABEL mantainer="Adrian Kriel <admin@extremeshok.com>" vendor="eXtremeSHOK.com"
 
-RUN \
-  echo "**** install nginx ****" \
+RUN echo "**** install nginx ****" \
   && apk-install nginx
 
-RUN \
-  echo "**** install msmtp ****" \
+RUN echo "**** install msmtp ****" \
   && apk-install msmtp
 
 RUN \
   echo "**** install docker ****" \
   && apk-install docker
 
-RUN \
-  echo "**** install bash runtime packages ****" \
+RUN echo "**** install bash runtime packages ****" \
   && apk-install \
     bash \
     coreutils \
     curl \
+    git \
     openssl \
     rsync \
     tzdata
 
-RUN \
-  echo "**** install dehydrated ****" \
-  && THISVERSION="$(curl --silent -L "https://api.github.com/repos/dehydrated-io/dehydrated/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')" \
-  && echo "$THISVERSION" \
-  && THISVERSION="$(echo "$THISVERSION" | sed 's/v//')" \
-  && curl --silent -o /tmp/dehydrated.tar.gz -L \
-   "https://github.com/dehydrated-io/dehydrated/releases/download/v${THISVERSION}/dehydrated-${THISVERSION}.tar.gz" \
-  && mkdir -p /tmp/dehydrated \
-  && tar xfz /tmp/dehydrated.tar.gz -C /tmp/dehydrated \
-  && cp -f /tmp/dehydrated/dehydrated*/dehydrated /sbin/dehydrated \
-  && chmod 777 /sbin/dehydrated \
-  && rm -f /tmp/dehydrated.tar.gz
+RUN echo "**** install dehydrated from git ****" \
+  && mkdir -p /usr/local/src \
+  && cd /usr/local/src \
+  && git clone --depth=1 https://github.com/dehydrated-io/dehydrated.git \
+  && ln -s /usr/local/src/dehydrated/dehydrated /sbin/dehydrated \
+  && chmod 777 /sbin/dehydrated
+
+# RUN echo "**** install dehydrated ****" \
+#   && THISVERSION="$(curl --silent -L "https://api.github.com/repos/dehydrated-io/dehydrated/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')" \
+#   && echo "$THISVERSION" \
+#   && THISVERSION="$(echo "$THISVERSION" | sed 's/v//')" \
+#   && curl --silent -o /tmp/dehydrated.tar.gz -L \
+#    "https://github.com/dehydrated-io/dehydrated/releases/download/v${THISVERSION}/dehydrated-${THISVERSION}.tar.gz" \
+#   && mkdir -p /tmp/dehydrated \
+#   && tar xfz /tmp/dehydrated.tar.gz -C /tmp/dehydrated \
+#   && cp -f /tmp/dehydrated/dehydrated*/dehydrated /sbin/dehydrated \
+#   && chmod 777 /sbin/dehydrated \
+#   && rm -f /tmp/dehydrated.tar.gz
 
 # add local files
 COPY rootfs/ /
 
-RUN \
-  echo "**** configure ****" \
+RUN echo "**** configure ****" \
   && mkdir -p /certs \
   && mkdir -p /acme/certs \
   && mkdir -p /acme/accounts \

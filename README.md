@@ -9,12 +9,13 @@ View **docker-compose-sample.yml** in the source repository for usage
 # features
 Alpine latest with s6
 Nginx
-dehydrated
+dehydrated ACME client 
+dehydrated is updated on container start
 check the domains can be accessed before doing acme, prevents wasted acme calls which will fail
 
 ## ENVIROMENT VARIBLES
 
-### List of certificates 
+### List of certificates
 ACME_DOMAINS=www.domain.com,domain.com;my.otherdomain.net;www.randomdomain.com
 
 ### List of docker containers to restart, assume docker socket is connected

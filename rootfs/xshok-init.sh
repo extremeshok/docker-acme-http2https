@@ -1,5 +1,9 @@
 #!/bin/bash
 
+echo "Update Dehydrated"
+cd /usr/local/src/dehydrated || exit
+git pull --depth=1
+
 if [ ! -z "$NOTIFY" ] && [ ! -z "$SMTP_HOST" ] && [ ! -z "$SMTP_USER" ] && [ ! -z "$SMTP_PASS" ] ; then
   # Generating Remote SMTP config
 cat << EOF >> /etc/msmtprc
