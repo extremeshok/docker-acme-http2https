@@ -46,4 +46,10 @@ EXPOSE 80/tcp
 
 WORKDIR /tmp
 
+# "when the SIGTERM signal is sent, it immediately quits and all established connections are closed"
+# "graceful stop is triggered when the SIGUSR1 signal is sent "
+STOPSIGNAL SIGUSR1
+
+HEALTHCHECK --interval=5s --timeout=5s CMD [ "302" = "$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:80/)" ] || exit 1
+
 ENTRYPOINT ["/init"]
