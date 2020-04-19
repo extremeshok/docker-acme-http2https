@@ -24,3 +24,8 @@ account default : remote
 
 EOF
 fi
+
+if [ ! -f "/root/.rnd" ] ; then
+  echo "Generating .rnd"
+  openssl rand -writerand "/root/.rnd"
+fi

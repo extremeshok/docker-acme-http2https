@@ -17,6 +17,7 @@ View **docker-compose-sample.yml** in the source repository for usage
 * check the domains can be accessed before doing acme, prevents wasted acme calls which will fail
 * Support for both /certs and /var/www/vhosts directory layouts
 * Optional generation of 4096bit DHPARAM
+* Generates a default /root/.rnd (fixes: Can't load /root/.rnd into RNG)
 
 ## OPTIONS
 
