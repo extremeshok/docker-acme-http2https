@@ -17,7 +17,7 @@ get_ipv4(){
   IPV4_SRCS[1]="ifconfig.co"
   IPV4_SRCS[2]="icanhazip.com"
   IPV4_SRCS[3]="v4.ident.me"
-  IPV4_SRCS[4]="ipecho.net/plain"
+  IPV4_SRCS[4]="ipv4.rkeene.org/whatismyip"
   until [[ ! -z ${IPV4} ]] || [[ ${TRY} -ge 120 ]]; do
     IPV4=$(curl --connect-timeout 3 -m 10 -L4s ${IPV4_SRCS[$RANDOM % ${#IPV4_SRCS[@]} ]} | grep -E "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
     [[ ! -z ${TRY} ]] && sleep 1
