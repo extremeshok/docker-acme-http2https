@@ -9,17 +9,22 @@
 # oe set the env varible "ACME_DOMAINS"
 #ACME_DOMAINS="something.com;anotherdomain.com,www.anotherdomain.com"
 
-get_ipv4(){
-  local IPV4=
-  local IPV4_SRCS=
-  local TRY=
-  IPV4_SRCS[0]="api.ipify.org"
-  IPV4_SRCS[1]="ifconfig.co"
-  IPV4_SRCS[2]="icanhazip.com"
-  IPV4_SRCS[3]="v4.ident.me"
-  IPV4_SRCS[4]="ipv4.rkeene.org/whatismyip"
-  until [[ ! -z ${IPV4} ]] || [[ ${TRY} -ge 120 ]]; do
-    IPV4=$(curl --connect-timeout 3 -m 10 -L4s ${IPV4_SRCS[$RANDOM % ${#IPV4_SRCS[@]} ]} | grep -E "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")
+# Function to get the IPv4 using an online service
+function xshok_get_ipv4 () {
+  local IPV4=""
+  local IPV4_SRCS=("v4.ident.me" "ifconfig.co")
+  local TRY=""
+  until [[ ! -z ${IPV4} ]] || [[ ${TRY} -ge 30 ]]; do
+    local IPV4_SRC="${IPV4_SRCS[$RANDOM%${#IPV4_SRCS[@]}]}"
+    if [ ! -z "$(which curl 2> /dev/null)" ] ; then
+      IPV4="$(curl --connect-timeout 15 -m 15 -L4s "${IPV4_SRC}" 2> /dev/null | grep -E "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" | tr -d '\n' | tr -d '\r' | xargs)"
+    else
+      IPV4="$(wget -qO- --connect-timeout=15 --read-timeout=15 -4 "${IPV4_SRC}" 2> /dev/null | grep -E "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" | tr -d '\n' | tr -d '\r' | xargs)"
+    fi
+    if [[ ! $IPV4 =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]] ; then
+      #invalid IP returned, try again
+      IPV4=""
+    fi
     [[ ! -z ${TRY} ]] && sleep 1
     TRY=$((TRY+1))
   done
@@ -33,7 +38,7 @@ fi
 
 if [[ ! "${SKIP_IP_CHECK}" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
   echo "========== Testing IPv4 webserver access =========="
-  IPV4=$(get_ipv4)
+  IPV4=$(xshok_get_ipv4)
   # shellcheck disable=SC2002
   UUID="xshok-$(date +%s)"
   echo "$UUID" > /var/www/acme-challenge/uuid.html
