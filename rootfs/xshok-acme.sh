@@ -99,11 +99,12 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
             DOMAINONLINE="false"
             until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
               echo "Testing Localhost"
-              if curl --silent "http://127.0.01/" >/dev/null 2>&1 ; then
+              if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
                 echo "Testing Domain with UUID: ${domain_micro}"
                 UUID_RESULT=$(curl -L4s "http://${domain_micro}/.well-known/acme-challenge/uuid.html")
                 if [ "$UUID" == "$UUID_RESULT" ] ; then
                   DOMAINONLINE="true";
+                  echo "Domain and uuid: valid"
                 fi
               fi
               [[ ! -z ${DOMAINONLINE} ]] && sleep 3
