@@ -74,6 +74,7 @@ if [ "$GENERATE_DHPARAM" == "yes" ] ; then
 elif [ ! -s "/acme/certs/dhparam.pem" ] ; then
   echo "========== Using bundled 4096 dhparam =========="
   cp "/etc/xshok/dhparam.pem" "/acme/certs/dhparam.pem"
+  chmod 600 "/acme/certs/dhparam.pem"
 fi
 
 if [[ ! -z ${HTTPONLINE} ]]  ; then
