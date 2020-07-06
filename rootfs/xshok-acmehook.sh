@@ -112,13 +112,13 @@ deploy_cert() {
 
   #domainname="${rootlevel##*/}"
 
-  if [ -f "$KEYFILE" ] ; then
+  if [ -s "$KEYFILE" ] ; then
     certdir="${CERTFILE/\/cert.pem/}"
-    if [ -f "$FULLCHAINFILE" ] ; then
+    if [ -s "$FULLCHAINFILE" ] ; then
       echo "Generating fullchainprivkey.pem for ${DOMAIN} @ ${TIMESTAMP}"
       cat "$FULLCHAINFILE" "$KEYFILE" > "${certdir}/fullchainprivkey.pem"
     fi
-    if [ -f "$CERTFILE" ] ; then
+    if [ -s "$CERTFILE" ] ; then
       echo "Generating certprivkey.pem for ${DOMAIN} @ ${TIMESTAMP}"
       cat "$CERTFILE" "$KEYFILE" > "${certdir}/certprivkey.pem"
     fi
@@ -182,7 +182,7 @@ invalid_challenge() {
   email_to="${NOTIFY}"
   email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
   if [[ $NOTIFY =~ [@] ]]; then
-    if [ -f "/etc/msmtprc" ] ; then
+    if [ -s "/etc/msmtprc" ] ; then
       echo "Using Remote SMTP"
       sendmail_app="msmtp --read-envelope-from --read-recipients --remove-bcc-headers=off -d"
     elif [ "$(command -v sendmail)" != "" ] ; then
@@ -223,7 +223,7 @@ request_failure() {
   email_to="${NOTIFY}"
   email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
   if [[ $NOTIFY =~ [@] ]]; then
-    if [ -f "/etc/msmtprc" ] ; then
+    if [ -s "/etc/msmtprc" ] ; then
       echo "Using Remote SMTP"
       sendmail_app="msmtp --read-envelope-from --read-recipients --remove-bcc-headers=off -d"
     elif [ "$(command -v sendmail)" != "" ] ; then
@@ -279,7 +279,7 @@ send_notification() {
   email_to="${NOTIFY}"
   email_from="${SMTP_USER:-"admin@$(hostname -f)"}"
   if [[ $NOTIFY =~ [@] ]]; then
-    if [ -f "/etc/msmtprc" ] ; then
+    if [ -s "/etc/msmtprc" ] ; then
       echo "Using Remote SMTP"
       sendmail_app="msmtp --read-envelope-from --read-recipients --remove-bcc-headers=off -d"
     elif [ "$(command -v sendmail)" != "" ] ; then

@@ -81,7 +81,8 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
   ## DEHYDRATED
   echo "========== DEHYDRATED RUNNING =========="
   dehydrated --register --accept-terms
-  if [ -f "/acme/domain_list.txt" ] ; then
+  ## exists and is not empty
+  if [ -s "/acme/domain_list.txt" ] ; then
     echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
     dehydrated --cron
   else
@@ -143,7 +144,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     while IFS= read -r -d '' vhost_dir; do
       vhost="${vhost_dir##*/}"
       #echo "${vhost_dir} == ${vhost}"
-      if [ -f "/acme/certs/${vhost}/privkey.pem" ] && [ -f "/acme/certs/${vhost}/fullchain.pem" ] ; then
+      if [ -s "/acme/certs/${vhost}/privkey.pem" ] && [ -s "/acme/certs/${vhost}/fullchain.pem" ] ; then
         if RSYNC_COMMAND=$(rsync -W -p -t -i -r --copy-links --no-compress --include="privkey.pem" --include="fullchain.pem" --exclude="*" "/acme/certs/${vhost}/" "/var/www/vhosts/${vhost}/certs/") ; then
           if [ -n "${RSYNC_COMMAND}" ]; then
             echo "$RSYNC_COMMAND"
@@ -151,7 +152,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
           fi
         fi
       fi
-      if [ -f "/acme/certs/dhparam.pem" ] ; then
+      if [ -s "/acme/certs/dhparam.pem" ] ; then
         if RSYNC_COMMAND=$(rsync -W -p -t -i -r --copy-links --no-compress "/acme/certs/dhparam.pem" "/var/www/vhosts/${vhost}/certs/dhparam.pem") ; then
           if [ -n "${RSYNC_COMMAND}" ]; then
             echo "$RSYNC_COMMAND"
