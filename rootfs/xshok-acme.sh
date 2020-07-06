@@ -86,6 +86,10 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
     dehydrated --cron
   else
+    # remove "'`
+    ACME_DOMAINS="${ACME_DOMAINS//\"/}"
+    ACME_DOMAINS="${ACME_DOMAINS//\'/}"
+    ACME_DOMAINS="${ACME_DOMAINS//\`/}"
     if [[ ! -z $ACME_DOMAINS ]]; then
       echo "-- Sign/renew new/changed/expiring certificates"
       if [[ $ACME_DOMAINS =~ [\,\;] ]]; then
