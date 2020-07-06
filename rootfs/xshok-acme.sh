@@ -61,7 +61,7 @@ fi
 
 ## DHPARAM
 if [ "$GENERATE_DHPARAM" == "yes" ] ; then
-  if [ ! -f "/acme/certs/dhparam.pem" ] ; then
+  if [ ! -s "/acme/certs/dhparam.pem" ] ; then
     echo "========== Generating 4096 dhparam =========="
     openssl dhparam -out /acme/certs/dhparam.pem 4096
     echo "Completed"
@@ -71,6 +71,9 @@ if [ "$GENERATE_DHPARAM" == "yes" ] ; then
     openssl dhparam -out /acme/certs/dhparam.pem 4096
     echo "Completed"
   fi
+elif [ ! -s "/acme/certs/dhparam.pem" ] ; then
+  echo "========== Using bundled 4096 dhparam =========="
+  cp "/etc/xshok/dhparam.pem" "/acme/certs/dhparam.pem"
 fi
 
 if [[ ! -z ${HTTPONLINE} ]]  ; then
