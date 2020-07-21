@@ -6,6 +6,10 @@ letsencrypt support which will automatically redirect all http traffic to https
 
 View **docker-compose-sample.yml** in the source repository for usage
 
+### Changes from v2
+* Support for v2 xshok-docker-webserver
+* proper support for vhosts with seperate domain_list.txt and acme dirs
+
 # features
 * Alpine latest with s6
 * HEALTHCHECK activated
