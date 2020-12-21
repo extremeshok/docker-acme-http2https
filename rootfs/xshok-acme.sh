@@ -88,7 +88,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
   ## exists and is not empty
   if [ -s "/acme/domain_list.txt" ] ; then
     echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
-    dehydrated --cron
+    dehydrated --cron --ipv4
   else
     # remove "'`
     ACME_DOMAINS="${ACME_DOMAINS//\"/}"
@@ -122,11 +122,11 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
           domain="${domain//,/ }"
           # prevent empty domains
           if [[ ! -z "${domain// }" ]]; then
-            dehydrated --cron --domain "$domain"
+            dehydrated --cron --ipv4 --domain "$domain"
           fi
         done
       else
-        dehydrated --cron --domain "$ACME_DOMAINS"
+        dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
       fi
     fi
   fi
