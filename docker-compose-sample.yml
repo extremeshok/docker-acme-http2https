@@ -6,7 +6,7 @@ services:
     image: extremeshok/acme-http2https:latest
     environment:
       - TZ=UTC
-      - ACME_DOMAINS=lb-a.extremeshok.com;nws.extremeshok.com,nws-a.extremeshok.com,nws-1.extremeshok.com,nws-b.extremeshok.com,nws-2.extremeshok.com,nws-c.extremeshok.com,nws-3.extremeshok.com,nws-d.extremeshok.com,nws-4.extremeshok.com
+      - ACME_DOMAINS=somedomain.com;nws.domain.com,nws-a.domain.com
       - ACME_RESTART_CONTAINERS=xshok_baseimagealpine_1;xshok_baseimagealpine_2;xshok_baseimagealpine_3
       - SKIP_IP_CHECK=no
       - SMTP_HOST=smtp.domain.com
