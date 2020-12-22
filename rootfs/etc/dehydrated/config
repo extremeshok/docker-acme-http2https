@@ -66,7 +66,7 @@ ALPNCERTDIR="${BASEDIR}/alpn-certs"
 ACCOUNTDIR="${BASEDIR}/accounts"
 
 # Output directory for challenge-tokens to be served by webserver or deployed in HOOK (default: /var/www/dehydrated)
-WELLKNOWN="/var/www/acme-challenge"
+WELLKNOWN="/var/www/.well-known/acme-challenge"
 
 # Default keysize for private keys (default: 4096)
 KEYSIZE="4096"

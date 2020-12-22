@@ -36,7 +36,7 @@ COPY rootfs/ /
 RUN echo "**** configure ****" \
   && mkdir -p /acme/certs \
   && mkdir -p /acme/accounts \
-  && mkdir -p /var/www/acme-challenge \
+  && mkdir -p /var/www/.well-known/acme-challenge \
   && chown -R nginx:nginx /var/www \
   && chmod 777 /xshok-acme.sh \
   && chmod 777 /xshok-acmehook.sh
