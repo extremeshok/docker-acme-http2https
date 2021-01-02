@@ -41,7 +41,7 @@ if [[ ! "${SKIP_IP_CHECK}" =~ ^([yY][eE][sS]|[yY])+$ ]]; then
   IPV4=$(xshok_get_ipv4)
   # shellcheck disable=SC2002
   UUID="xshok-$(date +%s)"
-  echo "$UUID" > /var/www/acme-challenge/uuid.html
+  echo "$UUID" > /var/www/.well-known/acme-challenge/uuid.html
   HTTPONLINE="false";
   until [[ ! -z ${HTTPONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
     echo "Testing Localhost"
@@ -103,7 +103,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
           domain_micro_array=$(echo "$domain" | tr "," "\\n")
           for domain_micro in $domain_micro_array ; do
             UUID="xshok-$(date +%s)"
-            echo "$UUID" > /var/www/acme-challenge/uuid.html
+            echo "$UUID" > /var/www/.well-known/acme-challenge/uuid.html
             DOMAINONLINE="false"
             until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
               echo "Testing Localhost"
