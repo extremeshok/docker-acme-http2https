@@ -36,7 +36,6 @@ RUN echo "**** configure ****" \
 RUN echo "**** Correct permissions ****" \
   && chmod 0644 /etc/cron.hourly/vhost-autoupdate \
   && chmod +x /etc/services.d/*/run \
-  && chmod +x /etc/services.d/*/finish \
   && chmod +x /xshok-*.sh
 
 EXPOSE 80/tcp
