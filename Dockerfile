@@ -8,15 +8,9 @@ RUN echo "**** install nginx ****" \
 RUN echo "**** install msmtp ****" \
   && apk-install msmtp
 
-RUN \
-  echo "**** install docker ****" \
-  && apk-install docker
-
 RUN echo "**** install bash runtime packages ****" \
   && apk-install \
-    bash \
     coreutils \
-    curl \
     git \
     inotify-tools \
     openssl \
@@ -37,9 +31,13 @@ RUN echo "**** configure ****" \
   && mkdir -p /acme/certs \
   && mkdir -p /acme/accounts \
   && mkdir -p /var/www/.well-known/acme-challenge \
-  && chown -R nginx:nginx /var/www \
-  && chmod 777 /xshok-acme.sh \
-  && chmod 777 /xshok-acmehook.sh
+  && chown -R nginx:nginx /var/www
+
+RUN echo "**** Correct permissions ****" \
+  && chmod 0644 /etc/cron.hourly/vhost-autoupdate \
+  && chmod +x /etc/services.d/*/run \
+  && chmod +x /etc/services.d/*/finish \
+  && chmod +x /xshok-*.sh
 
 EXPOSE 80/tcp
 

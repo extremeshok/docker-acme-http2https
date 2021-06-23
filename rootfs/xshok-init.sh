@@ -6,8 +6,8 @@
 ################################################################################
 
 if [ ! -z "$NOTIFY" ] && [ ! -z "$SMTP_HOST" ] && [ ! -z "$SMTP_USER" ] && [ ! -z "$SMTP_PASS" ] ; then
-  # Generating Remote SMTP config
-cat << EOF >> /etc/msmtprc
+    # Generating Remote SMTP config
+    cat << EOF >> /etc/msmtprc
 defaults
 port ${SMTP_PORT:-587}
 tls on
@@ -26,6 +26,6 @@ EOF
 fi
 
 if [ ! -f "/root/.rnd" ] ; then
-  echo "Generating .rnd"
-  openssl rand -writerand "/root/.rnd"
+    echo "Generating .rnd"
+    openssl rand -writerand "/root/.rnd"
 fi
