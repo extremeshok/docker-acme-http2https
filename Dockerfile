@@ -34,7 +34,6 @@ RUN echo "**** configure ****" \
   && chown -R nginx:nginx /var/www
 
 RUN echo "**** Correct permissions ****" \
-  && chmod 0644 /etc/cron.hourly/vhost-autoupdate \
   && chmod +x /etc/services.d/*/run \
   && chmod +x /xshok-*.sh
 
