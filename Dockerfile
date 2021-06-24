@@ -34,8 +34,8 @@ RUN echo "**** configure ****" \
   && chown -R nginx:nginx /var/www
 
 RUN echo "**** Correct permissions ****" \
-  && chmod +x /etc/services.d/*/run \
-  && chmod +x /xshok-*.sh
+  && chmod 755 /etc/services.d/*/run \
+  && chmod 755 /xshok-*.sh
 
 EXPOSE 80/tcp
 
