@@ -89,11 +89,32 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     #dehydrated --register --accept-terms
     acme.sh --register-account --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -m "$REGISTERED_EMAIL"
 
-    ## exists and is not empty
-    # if [ -s "/acme/domain_list.txt" ] ; then
-    #     echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
-    #     dehydrated --cron --ipv4
-    # else
+    # exists and is not empty
+    if [ -s "/acme/domain_list.txt" ] ; then
+        echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
+        #dehydrated --cron --ipv4
+
+while read line; do
+   # reading each line
+   echo "$line"
+  readarray -d " " -t strarr <<< "$line"
+  parent_domain="${line// */}"
+  add_domain=""
+  for (( n=0; n < ${#strarr[*]}; n++)) ; do
+    if [ "${parent_domain}" != "${strarr[n]}" ] ; then
+      add_domain="-d ${strarr[n]} ${add_domain}"
+    fi
+  done
+  acme.sh --issue --staging --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+--cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
+--fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
+-d "${parent_domain}" $add_domain --force
+done < "/acme/domain_list.txt"
+
+# --deploy-hook <hookname>          The hook file to deploy cert
+
+
+    else
         # remove "'`
         ACME_DOMAINS="${ACME_DOMAINS//\"/}"
         ACME_DOMAINS="${ACME_DOMAINS//\'/}"
@@ -135,7 +156,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
                 acme.sh --issue --staging --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$ACME_DOMAINS"
             fi
         fi
-    #fi
+    fi
 
     # echo "-- Moved unused certificate files to the archive directory"
     # dehydrated --cleanup
