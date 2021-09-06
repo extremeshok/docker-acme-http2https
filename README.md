@@ -6,7 +6,7 @@ letsencrypt support which will automatically redirect all http traffic to https
 
 View **docker-compose-sample.yml** in the source repository for usage
 
-# testing of acme.sh 
+# testing of acme.sh
 
 # features
 * Alpine latest with s6
