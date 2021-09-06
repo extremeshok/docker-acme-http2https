@@ -9,7 +9,7 @@
 # oe set the env varible "ACME_DOMAINS"
 #ACME_DOMAINS="something.com;anotherdomain.com,www.anotherdomain.com"
 
-REGISTERED_EMAIL="admin@extremeshok.com"
+REGISTERED_EMAIL="${REGISTERED_EMAIL:-"admin@extremeshok.com"}"
 
 # Function to get the IPv4 using an online service
 function xshok_get_ipv4 () {
@@ -105,10 +105,10 @@ while read line; do
       add_domain="-d ${strarr[n]} ${add_domain}"
     fi
   done
-  acme.sh --issue --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+  acme.sh --issue --debug --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
 --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
 --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
--d "${parent_domain}" $add_domain --force
+-d "${parent_domain}" $add_domain
 done < "/acme/domain_list.txt"
 
 # --deploy-hook <hookname>          The hook file to deploy cert
@@ -148,12 +148,18 @@ done < "/acme/domain_list.txt"
                     # prevent empty domains
                     if [[ ! -z "${domain// }" ]]; then
                         #dehydrated --cron --ipv4 --domain "$domain"
-                        acme.sh --issue --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$domain"
+                        acme.sh --issue --debug --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+                      --cert-file "/acme/certs/${domain}/cert.pem" --ca-file "/acme/certs/${domain}/chain.pem" \
+                      --fullchain-file "/acme/certs/${domain}/fullchain.pem" --key-file "/acme/certs/${domain}/privkey.pem" \
+                      -d "${domain}"
                     fi
                 done
             else
                 #dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
-                acme.sh --issue --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$ACME_DOMAINS"
+                acme.sh --issue --debug --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+              --cert-file "/acme/certs/${ACME_DOMAINS}/cert.pem" --ca-file "/acme/certs/${ACME_DOMAINS}/chain.pem" \
+              --fullchain-file "/acme/certs/${ACME_DOMAINS}/fullchain.pem" --key-file "/acme/certs/${ACME_DOMAINS}/privkey.pem" \
+              -d "${ACME_DOMAINS}"
             fi
         fi
     fi
