@@ -103,7 +103,7 @@ if [ "${XS_GENERATE_DHPARAM,,}" == "yes" ] || [ "${XS_GENERATE_DHPARAM,,}" == "t
         echo "========== Generating 4096 dhparam =========="
         openssl dhparam -out /acme/certs/dhparam.pem 4096
         echo "Completed"
-    elif ! grep -q "BEGIN DH PARAMETERS" /certs/dhparam.pem || ! grep -q "END DH PARAMETERS" /certs/dhparam.pem ; then
+    elif ! grep -q "BEGIN DH PARAMETERS" /acme/certs/dhparam.pem || ! grep -q "END DH PARAMETERS" /acme/certs/dhparam.pem ; then
         echo "========== Generating New 4096 dhparam =========="
         rm -f /acme/certs/dhparam.pem
         openssl dhparam -out /acme/certs/dhparam.pem 4096
