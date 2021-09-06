@@ -88,6 +88,7 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
     echo "========== ACME.SH RUNNING =========="
     #dehydrated --register --accept-terms
     acme.sh --register-account --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -m "$REGISTERED_EMAIL"
+    acme.sh --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" --set-default-ca  --server letsencrypt
 
     # exists and is not empty
     if [ -s "/acme/domain_list.txt" ] ; then
