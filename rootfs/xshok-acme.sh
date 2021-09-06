@@ -105,7 +105,7 @@ while read line; do
       add_domain="-d ${strarr[n]} ${add_domain}"
     fi
   done
-  acme.sh --issue --staging --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+  acme.sh --issue --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
 --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
 --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
 -d "${parent_domain}" $add_domain --force
@@ -148,12 +148,12 @@ done < "/acme/domain_list.txt"
                     # prevent empty domains
                     if [[ ! -z "${domain// }" ]]; then
                         #dehydrated --cron --ipv4 --domain "$domain"
-                        acme.sh --issue --staging --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$domain"
+                        acme.sh --issue --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$domain"
                     fi
                 done
             else
                 #dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
-                acme.sh --issue --staging --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$ACME_DOMAINS"
+                acme.sh --issue --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$ACME_DOMAINS"
             fi
         fi
     fi
