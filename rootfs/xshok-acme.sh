@@ -154,6 +154,8 @@ if [ -s "/acme/domain_list.txt" ] ; then
         parent_domain="${line// */}"
 
         if xshok_verify_domain "$parent_domain" ; then
+          echo "Parent: ${parent_domain} could not be verified, skipping"
+        else
             add_domain=""
             for (( n=0; n < ${#strarr[*]}; n++)) ; do
                 alias_domain="${strarr[n]}"
@@ -161,9 +163,9 @@ if [ -s "/acme/domain_list.txt" ] ; then
                   echo "Alias: ${parent_domain} and  parent: ${parent_domain} are the same, skipping"
                 else
                     if xshok_verify_domain "$alias_domain" ; then
-                        add_domain="-d ${alias_domain} ${add_domain}"
+                      echo "Alias: ${parent_domain} for parent: ${parent_domain} could not be verified, skipping"
                     else
-                        echo "Alias: ${parent_domain} for parent: ${parent_domain} could not be verified, skipping"
+                      add_domain="-d ${alias_domain} ${add_domain}"
                     fi
 
                 fi
@@ -172,8 +174,6 @@ if [ -s "/acme/domain_list.txt" ] ; then
                 --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
                 --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
                 -d "${parent_domain}" $add_domain
-        else
-            echo "Parent: ${parent_domain} could not be verified, skipping"
         fi
 
     done < "/acme/domain_list.txt"
