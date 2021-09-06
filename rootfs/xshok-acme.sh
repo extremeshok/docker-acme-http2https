@@ -93,11 +93,11 @@ function xshok_verify_domain () { #domain
         done
     fi
     if [ "$DOMAINONLINE" == "true" ] ; then
-      #domain online
-      return 1
+        #domain online
+        return 1
     else
-      #domain offline
-      return 0
+        #domain offline
+        return 0
     fi
 }
 
@@ -160,20 +160,21 @@ if [ -s "/acme/domain_list.txt" ] ; then
         parent_domain="${line// */}"
 
         if xshok_verify_domain "$parent_domain" ; then
-          echo "Parent: ${parent_domain} could not be verified, skipping"
+            echo "Parent: ${parent_domain} could not be verified, skipping"
         else
             echo "Parent: ${parent_domain}"
             add_domain=""
-            for (( n=1; n < ${#strarr[*]}; n++)) ; do  #skip the first 
+            for (( n=1; n < ${#strarr[*]}; n++)) ; do  #skip the first
                 alias_domain="${strarr[n]}"
+                alias_domain="$(echo "$alias_domain" | xargs)" #ensure all new lines and white space is removed
                 if [ "${parent_domain}" == "$alias_domain" ] ; then
-                  echo "Alias: ${parent_domain} and  parent: ${alias_domain} are the same, skipping"
+                    echo "Alias: ${parent_domain} and  parent: ${alias_domain} are the same, skipping"
                 else
                     if xshok_verify_domain "$alias_domain" ; then
-                      echo "Alias: ${alias_domain} for parent: ${parent_domain} could not be verified, skipping"
+                        echo "Alias: ${alias_domain} for parent: ${parent_domain} could not be verified, skipping"
                     else
-                      echo "Alias: ${alias_domain} for parent: ${parent_domain} , added"
-                      add_domain="-d ${alias_domain} ${add_domain}"
+                        echo "Alias: ${alias_domain} for parent: ${parent_domain} , added"
+                        add_domain="-d ${alias_domain} ${add_domain}"
                     fi
 
                 fi
