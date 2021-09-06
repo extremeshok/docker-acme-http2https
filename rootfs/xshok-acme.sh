@@ -30,14 +30,14 @@ XS_RESTART_DOCKER_CONTAINERS="${ACME_RESTART_CONTAINERS:-}"
 
 
 if [ "${XS_ENABLE_STAGING,,}" == "yes" ] || [ "${XS_ENABLE_STAGING,,}" == "true" ] || [ "${XS_ENABLE_STAGING,,}" == "on" ] || [ "${XS_ENABLE_STAGING}" == "1" ] ; then
-  XS_ENABLE_STAGING="--staging"
+    XS_ENABLE_STAGING="--staging"
 else
-  XS_ENABLE_STAGING=""
+    XS_ENABLE_STAGING=""
 fi
 if [ "${XS_ENABLE_DEBUG,,}" == "yes" ] || [ "${XS_ENABLE_DEBUG,,}" == "true" ] || [ "${XS_ENABLE_DEBUG,,}" == "on" ] || [ "${XS_ENABLE_DEBUG}" == "1" ] ; then
-  XS_ENABLE_DEBUG="--debug "
+    XS_ENABLE_DEBUG="--debug "
 else
-  XS_ENABLE_DEBUG=""
+    XS_ENABLE_DEBUG=""
 fi
 
 #Generate a fresh UUID
@@ -47,6 +47,7 @@ echo "$UUID" > /var/www/.well-known/acme-challenge/uuid.html
 ######################### FUNCTIONS
 
 # Function to get the IPv4 using an online service
+#returns the IP
 function xshok_get_ipv4 () {
     local IPV4=""
     local IPV4_SRCS=("v4.ident.me" "ifconfig.co")
@@ -65,32 +66,33 @@ function xshok_get_ipv4 () {
         [[ ! -z ${TRY} ]] && sleep 1
         TRY=$((TRY+1))
     done
-    echo "Discovered IPv4 : ${IPV4}"
-    return "${IPV4}"
+    echo "${IPV4}"
 }
 
 # Function to verify the domain is rechable and pointing to this server, prevents wasted acme runs
+#returns 0 (online) or 1 (offline)
 function xshok_verify_domain () { #domain
-  DOMAIN_NAME="$1"
-  if [ "${XS_SKIP_DOMAIN_CHECK,,}" == "yes" ] || [ "${XS_SKIP_DOMAIN_CHECK,,}" == "true" ] || [ "${XS_SKIP_DOMAIN_CHECK,,}" == "on" ] || [ "${XS_SKIP_DOMAIN_CHECK}" == "1" ] ; then
-    DOMAINONLINE="true"
-  else
-    DOMAINONLINE="false"
-    until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
-        echo "Testing Localhost"
-        if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
-            echo "Testing Domain with UUID: ${DOMAIN_NAME}"
-            UUID_RESULT=$(curl -L4s "http://${DOMAIN_NAME}/.well-known/acme-challenge/uuid.html")
-            if [ "$UUID" == "$UUID_RESULT" ] ; then
-                DOMAINONLINE="true";
-                echo "Domain and uuid: valid"
+    DOMAIN_NAME="$1"
+    if [ "${XS_SKIP_DOMAIN_CHECK,,}" == "yes" ] || [ "${XS_SKIP_DOMAIN_CHECK,,}" == "true" ] || [ "${XS_SKIP_DOMAIN_CHECK,,}" == "on" ] || [ "${XS_SKIP_DOMAIN_CHECK}" == "1" ] ; then
+        DOMAINONLINE="true"
+    else
+        DOMAINONLINE="false"
+        until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
+            # Testing Localhost
+            if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
+                # Testing DOMAIN_NAME
+                UUID_RESULT=$(curl -L4s "http://${DOMAIN_NAME}/.well-known/acme-challenge/uuid.html")
+                if [ "$UUID" == "$UUID_RESULT" ] ; then
+                    # domain online
+                    return 0
+                fi
             fi
-        fi
-        [[ ! -z ${DOMAINONLINE} ]] && sleep 3
-        TRY=$((TRY+1))
-    done
-  fi
-  return "$DOMAINONLINE"
+            [[ ! -z ${DOMAINONLINE} ]] && sleep 3
+            TRY=$((TRY+1))
+        done
+    fi
+    #domain offline
+    return 1
 }
 
 ######################### MAIN
@@ -118,18 +120,20 @@ if [ "${XS_SKIP_IP_CHECK,,}" != "yes" ] && [ "${XS_SKIP_IP_CHECK,,}" != "true" ]
     echo "========== Testing IPv4 webserver access =========="
     IPV4="$(xshok_get_ipv4)"
     # shellcheck disable=SC2002
-    if [ "$(xshok_verify_domain "$IPV4")" != "true" ] ; then
-      echo "========== IPv4 NOT online , sleeping for 1 hour =========="
-      sleep 1h
-      exit
+    if xshok_verify_domain "$IPV4" ; then
+        echo "========== IPv4 (${IPV4}) NOT online, sleeping for 1 hour =========="
+        sleep 1h
+        exit
+    else
+        echo "========== IPv4 (${IPV4}) online =========="
     fi
 fi
 
 ## UPDATE ACME.SH from github
 if [ "${XS_UPDATE_ACME,,}" == "yes" ] || [ "${XS_UPDATE_ACME,,}" == "true" ] || [ "${XS_UPDATE_ACME,,}" == "on" ] || [ "${XS_UPDATE_ACME}" == "1" ] ; then
-  echo "========== Updating ACME.SH =========="
-  cd /usr/local/src/acme.sh || exit
-  git pull --depth=1
+    echo "========== Updating ACME.SH =========="
+    cd /usr/local/src/acme.sh || exit
+    git pull --depth=1
 fi
 
 ## ACME INITIALISATION
@@ -149,78 +153,81 @@ if [ -s "/acme/domain_list.txt" ] ; then
         readarray -d " " -t strarr <<< "$line"
         parent_domain="${line// */}"
 
-        if [ "$(xshok_verify_domain "$parent_domain")" != "true" ] ; then
-          echo "Parent: ${parent_domain} could not be verified, skipping"
-        else
-          add_domain=""
-          for (( n=0; n < ${#strarr[*]}; n++)) ; do
-            alias_domain="${strarr[n]}"
-              if [ "${parent_domain}" != "$alias_domain" ] ; then
-                if [ "$(xshok_verify_domain "$alias_domain")" != "true" ] ; then
-                  echo "Alias: ${parent_domain} for parent ${parent_domain} could not be verified, skipping"
+        if xshok_verify_domain "$parent_domain" ; then
+            add_domain=""
+            for (( n=0; n < ${#strarr[*]}; n++)) ; do
+                alias_domain="${strarr[n]}"
+                if [ "${parent_domain}" == "$alias_domain" ] ; then
+                  echo "Alias: ${parent_domain} and  parent: ${parent_domain} are the same, skipping"
                 else
-                  add_domain="-d ${alias_domain} ${add_domain}"
+                    if xshok_verify_domain "$alias_domain" ; then
+                        add_domain="-d ${alias_domain} ${add_domain}"
+                    else
+                        echo "Alias: ${parent_domain} for parent: ${parent_domain} could not be verified, skipping"
+                    fi
+
                 fi
-              fi
-          done
-          acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
-              --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
-              --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
-              -d "${parent_domain}" $add_domain
+            done
+            acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+                --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
+                --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
+                -d "${parent_domain}" $add_domain
+        else
+            echo "Parent: ${parent_domain} could not be verified, skipping"
         fi
 
-      done < "/acme/domain_list.txt"
+    done < "/acme/domain_list.txt"
 
     # --deploy-hook <hookname>          The hook file to deploy cert
 else
-  echo "disabled ACME_DOMAINS support, will be fixed shortly"
-  # # remove "'`
-  # ACME_DOMAINS="${ACME_DOMAINS//\"/}"
-  # ACME_DOMAINS="${ACME_DOMAINS//\'/}"
-  # ACME_DOMAINS="${ACME_DOMAINS//\`/}"
-  # if [[ ! -z $ACME_DOMAINS ]]; then
-  #     echo "-- Sign/renew new/changed/expiring certificates"
-  #     if [[ $ACME_DOMAINS =~ [\,\;] ]]; then
-  #         domain_array=$(echo "$ACME_DOMAINS" | tr ";" "\\n")
-  #         for domain in $domain_array ; do
-  #             #check the domains can be accessed, prevents wasted acme calls which will fail
-  #             domain_micro_array=$(echo "$domain" | tr "," "\\n")
-  #             for domain_micro in $domain_micro_array ; do
-  #                 UUID="xshok-$(date +%s)"
-  #                 echo "$UUID" > /var/www/.well-known/acme-challenge/uuid.html
-  #                 DOMAINONLINE="false"
-  #                 until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
-  #                     echo "Testing Localhost"
-  #                     if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
-  #                         echo "Testing Domain with UUID: ${domain_micro}"
-  #                         UUID_RESULT=$(curl -L4s "http://${domain_micro}/.well-known/acme-challenge/uuid.html")
-  #                         if [ "$UUID" == "$UUID_RESULT" ] ; then
-  #                             DOMAINONLINE="true";
-  #                             echo "Domain and uuid: valid"
-  #                         fi
-  #                     fi
-  #                     [[ ! -z ${DOMAINONLINE} ]] && sleep 3
-  #                     TRY=$((TRY+1))
-  #                 done
-  #             done
-  #             domain="${domain//,/ }"
-  #             # prevent empty domains
-  #             if [[ ! -z "${domain// }" ]]; then
-  #                 #dehydrated --cron --ipv4 --domain "$domain"
-  #                 acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
-  #                     --cert-file "/acme/certs/${domain}/cert.pem" --ca-file "/acme/certs/${domain}/chain.pem" \
-  #                     --fullchain-file "/acme/certs/${domain}/fullchain.pem" --key-file "/acme/certs/${domain}/privkey.pem" \
-  #                     -d "${domain}"
-  #             fi
-  #         done
-  #     else
-  #         #dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
-  #         acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
-  #             --cert-file "/acme/certs/${ACME_DOMAINS}/cert.pem" --ca-file "/acme/certs/${ACME_DOMAINS}/chain.pem" \
-  #             --fullchain-file "/acme/certs/${ACME_DOMAINS}/fullchain.pem" --key-file "/acme/certs/${ACME_DOMAINS}/privkey.pem" \
-  #             -d "${ACME_DOMAINS}"
-  #     fi
-  # fi
+    echo "disabled ACME_DOMAINS support, will be fixed shortly"
+    # # remove "'`
+    # ACME_DOMAINS="${ACME_DOMAINS//\"/}"
+    # ACME_DOMAINS="${ACME_DOMAINS//\'/}"
+    # ACME_DOMAINS="${ACME_DOMAINS//\`/}"
+    # if [[ ! -z $ACME_DOMAINS ]]; then
+    #     echo "-- Sign/renew new/changed/expiring certificates"
+    #     if [[ $ACME_DOMAINS =~ [\,\;] ]]; then
+    #         domain_array=$(echo "$ACME_DOMAINS" | tr ";" "\\n")
+    #         for domain in $domain_array ; do
+    #             #check the domains can be accessed, prevents wasted acme calls which will fail
+    #             domain_micro_array=$(echo "$domain" | tr "," "\\n")
+    #             for domain_micro in $domain_micro_array ; do
+    #                 UUID="xshok-$(date +%s)"
+    #                 echo "$UUID" > /var/www/.well-known/acme-challenge/uuid.html
+    #                 DOMAINONLINE="false"
+    #                 until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
+    #                     echo "Testing Localhost"
+    #                     if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
+    #                         echo "Testing Domain with UUID: ${domain_micro}"
+    #                         UUID_RESULT=$(curl -L4s "http://${domain_micro}/.well-known/acme-challenge/uuid.html")
+    #                         if [ "$UUID" == "$UUID_RESULT" ] ; then
+    #                             DOMAINONLINE="true";
+    #                             echo "Domain and uuid: valid"
+    #                         fi
+    #                     fi
+    #                     [[ ! -z ${DOMAINONLINE} ]] && sleep 3
+    #                     TRY=$((TRY+1))
+    #                 done
+    #             done
+    #             domain="${domain//,/ }"
+    #             # prevent empty domains
+    #             if [[ ! -z "${domain// }" ]]; then
+    #                 #dehydrated --cron --ipv4 --domain "$domain"
+    #                 acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+        #                     --cert-file "/acme/certs/${domain}/cert.pem" --ca-file "/acme/certs/${domain}/chain.pem" \
+        #                     --fullchain-file "/acme/certs/${domain}/fullchain.pem" --key-file "/acme/certs/${domain}/privkey.pem" \
+        #                     -d "${domain}"
+    #             fi
+    #         done
+    #     else
+    #         #dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
+    #         acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+        #             --cert-file "/acme/certs/${ACME_DOMAINS}/cert.pem" --ca-file "/acme/certs/${ACME_DOMAINS}/chain.pem" \
+        #             --fullchain-file "/acme/certs/${ACME_DOMAINS}/fullchain.pem" --key-file "/acme/certs/${ACME_DOMAINS}/privkey.pem" \
+        #             -d "${ACME_DOMAINS}"
+    #     fi
+    # fi
 fi
 
 RESTART_DOCKER="no"
@@ -264,32 +271,32 @@ fi
 ## restart docker containers if required
 if [ "${XS_RESTART_DOCKER,,}" == "yes" ] || [ "${XS_RESTART_DOCKER,,}" == "true" ] || [ "${XS_RESTART_DOCKER,,}" == "on" ] || [ "${XS_RESTART_DOCKER}" == "1" ] ; then
     if [ "$RESTART_DOCKER" == "yes" ] ; then
-      if [[ ! -z ${XS_RESTART_DOCKER_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
-        echo "========== Restarting Docker Containers =========="
-        if [[ $XS_RESTART_DOCKER_CONTAINERS =~ [\,\;] ]]; then
-            container_array=$(echo "$XS_RESTART_DOCKER_CONTAINERS" | tr ";" "\\n")
-            for container in $container_array ; do
-                #container="${container//,/ }"
-                # prevent empty domains
-                if [[ ! -z "${container// }" ]]; then
-                    if DOCKER_COMMAND=$(docker restart "$container") ; then
-                        echo "-- Restarted Docker Container: $container"
-                    else
-                        echo "Error: Restarting Docker Container"
-                        echo "$DOCKER_COMMAND"
+        if [[ ! -z ${XS_RESTART_DOCKER_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
+            echo "========== Restarting Docker Containers =========="
+            if [[ $XS_RESTART_DOCKER_CONTAINERS =~ [\,\;] ]]; then
+                container_array=$(echo "$XS_RESTART_DOCKER_CONTAINERS" | tr ";" "\\n")
+                for container in $container_array ; do
+                    #container="${container//,/ }"
+                    # prevent empty domains
+                    if [[ ! -z "${container// }" ]]; then
+                        if DOCKER_COMMAND=$(docker restart "$container") ; then
+                            echo "-- Restarted Docker Container: $container"
+                        else
+                            echo "Error: Restarting Docker Container"
+                            echo "$DOCKER_COMMAND"
+                        fi
                     fi
-                fi
-            done
-        else
-            if DOCKER_COMMAND=$(docker restart "$XS_RESTART_DOCKER_CONTAINERS") ; then
-                echo "-- Restarted Docker Container: $XS_RESTART_DOCKER_CONTAINERS"
+                done
             else
-                echo "Error: Restarting Docker Container"
-                echo "$DOCKER_COMMAND"
+                if DOCKER_COMMAND=$(docker restart "$XS_RESTART_DOCKER_CONTAINERS") ; then
+                    echo "-- Restarted Docker Container: $XS_RESTART_DOCKER_CONTAINERS"
+                else
+                    echo "Error: Restarting Docker Container"
+                    echo "$DOCKER_COMMAND"
+                fi
             fi
         fi
     fi
-  fi
 fi
 
 echo "========== SLEEPING for 1 day and watching /acme/domain_list.txt =========="
