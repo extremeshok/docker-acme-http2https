@@ -115,7 +115,7 @@ fi
 ## Test IPV4 is accessible
 if [ "${XS_SKIP_IP_CHECK,,}" != "yes" ] && [ "${XS_SKIP_IP_CHECK,,}" != "true" ] && [ "${XS_SKIP_IP_CHECK,,}" != "on" ] && [ "${XS_SKIP_IP_CHECK}" != "1" ] ; then
     echo "========== Testing IPv4 webserver access =========="
-    IPV4=$(xshok_get_ipv4)
+    IPV4="$(xshok_get_ipv4)"
     # shellcheck disable=SC2002
     if [ "$(xshok_verify_domain "$IPV4")" != "true" ] ; then
       echo "========== IPv4 NOT online , sleeping for 1 hour =========="
