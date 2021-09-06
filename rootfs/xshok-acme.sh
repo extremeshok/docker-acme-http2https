@@ -65,7 +65,8 @@ function xshok_get_ipv4 () {
         [[ ! -z ${TRY} ]] && sleep 1
         TRY=$((TRY+1))
     done
-    echo "${IPV4}"
+    echo "Discovered IPv4 : ${IPV4}"
+    return "${IPV4}"
 }
 
 # Function to verify the domain is rechable and pointing to this server, prevents wasted acme runs
