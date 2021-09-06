@@ -76,23 +76,29 @@ function xshok_verify_domain () { #domain
     if [ "${XS_SKIP_DOMAIN_CHECK,,}" == "yes" ] || [ "${XS_SKIP_DOMAIN_CHECK,,}" == "true" ] || [ "${XS_SKIP_DOMAIN_CHECK,,}" == "on" ] || [ "${XS_SKIP_DOMAIN_CHECK}" == "1" ] ; then
         DOMAINONLINE="true"
     else
-        DOMAINONLINE="false"
-        until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
+        DOMAINONLINE=""
+        TRY=0
+        until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 30 ]]; do
             # Testing Localhost
             if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
                 # Testing DOMAIN_NAME
                 UUID_RESULT=$(curl -L4s "http://${DOMAIN_NAME}/.well-known/acme-challenge/uuid.html")
                 if [ "$UUID" == "$UUID_RESULT" ] ; then
                     # domain online
-                    return 0
+                    DOMAINONLINE="true"
                 fi
             fi
-            [[ ! -z ${DOMAINONLINE} ]] && sleep 3
+            [[ -z ${DOMAINONLINE} ]] && sleep 3
             TRY=$((TRY+1))
         done
     fi
-    #domain offline
-    return 1
+    if [ "$DOMAINONLINE" == "true" ] ; then
+      #domain online
+      return 1
+    else
+      #domain offline
+      return 0
+    fi
 }
 
 ######################### MAIN
