@@ -9,6 +9,8 @@
 # oe set the env varible "ACME_DOMAINS"
 #ACME_DOMAINS="something.com;anotherdomain.com,www.anotherdomain.com"
 
+REGISTERED_EMAIL="admin@extremeshok.com"
+
 # Function to get the IPv4 using an online service
 function xshok_get_ipv4 () {
     local IPV4=""
@@ -78,17 +80,20 @@ fi
 
 if [[ ! -z ${HTTPONLINE} ]]  ; then
     ## UPDATE
-    echo "========== UPDATE DEHYDRATED =========="
-    cd /usr/local/src/dehydrated || exit
+    echo "========== UPDATE ACME.SH =========="
+    cd /usr/local/src/acme.sh || exit
     git pull --depth=1
+
     ## DEHYDRATED
-    echo "========== DEHYDRATED RUNNING =========="
-    dehydrated --register --accept-terms
+    echo "========== ACME.SH RUNNING =========="
+    #dehydrated --register --accept-terms
+    acme.sh --register-account --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -m "$REGISTERED_EMAIL"
+
     ## exists and is not empty
-    if [ -s "/acme/domain_list.txt" ] ; then
-        echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
-        dehydrated --cron --ipv4
-    else
+    # if [ -s "/acme/domain_list.txt" ] ; then
+    #     echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
+    #     dehydrated --cron --ipv4
+    # else
         # remove "'`
         ACME_DOMAINS="${ACME_DOMAINS//\"/}"
         ACME_DOMAINS="${ACME_DOMAINS//\'/}"
@@ -121,17 +126,19 @@ if [[ ! -z ${HTTPONLINE} ]]  ; then
                     domain="${domain//,/ }"
                     # prevent empty domains
                     if [[ ! -z "${domain// }" ]]; then
-                        dehydrated --cron --ipv4 --domain "$domain"
+                        #dehydrated --cron --ipv4 --domain "$domain"
+                        acme.sh --issue --staging --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$domain"
                     fi
                 done
             else
-                dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
+                #dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
+                acme.sh --issue --staging --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" -d "$ACME_DOMAINS"
             fi
         fi
-    fi
+    #fi
 
-    echo "-- Moved unused certificate files to the archive directory"
-    dehydrated --cleanup
+    # echo "-- Moved unused certificate files to the archive directory"
+    # dehydrated --cleanup
 
     RESTART_DOCKER="no"
 

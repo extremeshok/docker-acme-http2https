@@ -6,13 +6,15 @@ letsencrypt support which will automatically redirect all http traffic to https
 
 View **docker-compose-sample.yml** in the source repository for usage
 
+# testing of acme.sh 
+
 # features
 * Alpine latest with s6
 * HEALTHCHECK activated
 * Nginx
 * redirects http to httpS
-* dehydrated ACME client
-* dehydrated is updated on container start
+* acme.sh ACME client
+* acme.sh is updated on container start
 * After acme client has run, sleep for 1 day and watching /acme/domain_list.txt for changes
 * check the domains can be accessed before doing acme, prevents wasted acme calls which will fail
 * Support for both /certs and /var/www/vhosts directory layouts

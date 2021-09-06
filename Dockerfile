@@ -17,12 +17,19 @@ RUN echo "**** install bash runtime packages ****" \
     rsync \
     tzdata
 
-RUN echo "**** install dehydrated from git ****" \
+# RUN echo "**** install dehydrated from git ****" \
+#   && mkdir -p /usr/local/src \
+#   && cd /usr/local/src \
+#   && git clone --depth=1 https://github.com/dehydrated-io/dehydrated.git \
+#   && ln -s /usr/local/src/dehydrated/dehydrated /sbin/dehydrated \
+#   && chmod 777 /sbin/dehydrated
+
+RUN echo "**** install acme.sh from git ****" \
   && mkdir -p /usr/local/src \
   && cd /usr/local/src \
-  && git clone --depth=1 https://github.com/dehydrated-io/dehydrated.git \
-  && ln -s /usr/local/src/dehydrated/dehydrated /sbin/dehydrated \
-  && chmod 777 /sbin/dehydrated
+  && git clone --depth=1 https://github.com/acmesh-official/acme.sh.git \
+  && ln -s /usr/local/src/acme.sh/acme.sh /sbin/acme.sh \
+  && chmod 777 /sbin/acme.sh
 
 # add local files
 COPY rootfs/ /
