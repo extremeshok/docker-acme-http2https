@@ -166,11 +166,12 @@ if [ -s "/acme/domain_list.txt" ] ; then
             for (( n=0; n < ${#strarr[*]}; n++)) ; do
                 alias_domain="${strarr[n]}"
                 if [ "${parent_domain}" == "$alias_domain" ] ; then
-                  echo "Alias: ${parent_domain} and  parent: ${parent_domain} are the same, skipping"
+                  echo "Alias: ${parent_domain} and  parent: ${alias_domain} are the same, skipping"
                 else
                     if xshok_verify_domain "$alias_domain" ; then
-                      echo "Alias: ${parent_domain} for parent: ${parent_domain} could not be verified, skipping"
+                      echo "Alias: ${alias_domain} for parent: ${parent_domain} could not be verified, skipping"
                     else
+                      echo "Added alias: ${alias_domain} for parent: ${parent_domain}"
                       add_domain="-d ${alias_domain} ${add_domain}"
                     fi
 
