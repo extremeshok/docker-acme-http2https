@@ -17,6 +17,7 @@ shopt -s nocaseglob
 
 ######################### VARIABLES
 
+REGISTERED_EMAIL=${NOTIFY:-$REGISTERED_EMAIL}
 XS_REGISTERED_EMAIL="${REGISTERED_EMAIL:-admin@extremeshok.com}"
 XS_DEFAULT_CA="${DEFAULT_CA:-letsencrypt}"
 XS_ENABLE_STAGING="${ENABLE_STAGING:-no}"
@@ -27,7 +28,7 @@ XS_GENERATE_DHPARAM="${GENERATE_DHPARAM:-yes}"
 XS_UPDATE_ACME="${UPDATE_ACME:-yes}"
 XS_RESTART_DOCKER="${RESTART_DOCKER:-no}"
 XS_RESTART_DOCKER_CONTAINERS="${ACME_RESTART_CONTAINERS:-}"
-
+XS_ACME_DOMAINS="${ACME_DOMAINS:-}"
 
 if [ "${XS_ENABLE_STAGING,,}" == "yes" ] || [ "${XS_ENABLE_STAGING,,}" == "true" ] || [ "${XS_ENABLE_STAGING,,}" == "on" ] || [ "${XS_ENABLE_STAGING}" == "1" ] ; then
     XS_ENABLE_STAGING="--staging"
@@ -38,6 +39,12 @@ if [ "${XS_ENABLE_DEBUG,,}" == "yes" ] || [ "${XS_ENABLE_DEBUG,,}" == "true" ] |
     XS_ENABLE_DEBUG="--debug "
 else
     XS_ENABLE_DEBUG=""
+fi
+# remove "'`
+if [[ -n "$XS_ACME_DOMAINS" ]] ; then
+  XS_ACME_DOMAINS="${XS_ACME_DOMAINS//\"/}"
+  XS_ACME_DOMAINS="${XS_ACME_DOMAINS//\'/}"
+  XS_ACME_DOMAINS="${XS_ACME_DOMAINS//\`/}"
 fi
 
 #Generate a fresh UUID
@@ -153,11 +160,11 @@ if [ -s "/acme/domain_list.txt" ] ; then
     echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
     #dehydrated --cron --ipv4
 
-    while read line; do
+    while read -r line; do
         # reading each line
-        echo "$line"
-        readarray -d " " -t strarr <<< "$line"
-        parent_domain="${line// */}"
+        #echo "$line"
+        readarray -d " " -t strarr <<< "$domain_line"
+        parent_domain="${domain_line// */}"
 
         if xshok_verify_domain "$parent_domain" ; then
             echo "Parent: ${parent_domain} could not be verified, skipping"
@@ -173,7 +180,7 @@ if [ -s "/acme/domain_list.txt" ] ; then
                     if xshok_verify_domain "$alias_domain" ; then
                         echo "Alias: ${alias_domain} for parent: ${parent_domain} could not be verified, skipping"
                     else
-                        echo "Alias: ${alias_domain} for parent: ${parent_domain} , added"
+                        echo "Alias: ${alias_domain} for parent: ${parent_domain}"
                         add_domain="-d ${alias_domain} ${add_domain}"
                     fi
 
@@ -188,55 +195,45 @@ if [ -s "/acme/domain_list.txt" ] ; then
     done < "/acme/domain_list.txt"
 
     # --deploy-hook <hookname>          The hook file to deploy cert
+elif [[ ! -z $XS_ACME_DOMAINS ]]; then
+  echo "-- Sign/renew new/changed/expiring certificates from ACME_DOMAINS"
+
+  #if [[ $XS_ACME_DOMAINS =~ [\,\;] ]]; then
+  domain_array=$(echo "$XS_ACME_DOMAINS" | tr ";" "\\n")
+  for domain_line in $domain_array ; do
+
+    readarray -d "," -t strarr <<< "$domain_line"
+    parent_domain="${domain_line//,*/}"
+
+    if xshok_verify_domain "$parent_domain" ; then
+        echo "Parent: ${parent_domain} could not be verified, skipping"
+    else
+        echo "Parent: ${parent_domain}"
+        add_domain=""
+        for (( n=1; n < ${#strarr[*]}; n++)) ; do  #skip the first
+            alias_domain="${strarr[n]}"
+            alias_domain="$(echo "$alias_domain" | xargs)" #ensure all new lines and white space is removed
+            if [ "${parent_domain}" == "$alias_domain" ] ; then
+                echo "Alias: ${parent_domain} and  parent: ${alias_domain} are the same, skipping"
+            else
+                if xshok_verify_domain "$alias_domain" ; then
+                    echo "Alias: ${alias_domain} for parent: ${parent_domain} could not be verified, skipping"
+                else
+                    echo "Alias: ${alias_domain} for parent: ${parent_domain}"
+                    add_domain="-d ${alias_domain} ${add_domain}"
+                fi
+
+            fi
+        done
+        acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+            --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
+            --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
+            -d "${parent_domain}" $add_domain
+    fi
+  done
 else
-    echo "disabled ACME_DOMAINS support, will be fixed shortly"
-    # # remove "'`
-    # ACME_DOMAINS="${ACME_DOMAINS//\"/}"
-    # ACME_DOMAINS="${ACME_DOMAINS//\'/}"
-    # ACME_DOMAINS="${ACME_DOMAINS//\`/}"
-    # if [[ ! -z $ACME_DOMAINS ]]; then
-    #     echo "-- Sign/renew new/changed/expiring certificates"
-    #     if [[ $ACME_DOMAINS =~ [\,\;] ]]; then
-    #         domain_array=$(echo "$ACME_DOMAINS" | tr ";" "\\n")
-    #         for domain in $domain_array ; do
-    #             #check the domains can be accessed, prevents wasted acme calls which will fail
-    #             domain_micro_array=$(echo "$domain" | tr "," "\\n")
-    #             for domain_micro in $domain_micro_array ; do
-    #                 UUID="xshok-$(date +%s)"
-    #                 echo "$UUID" > /var/www/.well-known/acme-challenge/uuid.html
-    #                 DOMAINONLINE="false"
-    #                 until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 120 ]]; do
-    #                     echo "Testing Localhost"
-    #                     if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
-    #                         echo "Testing Domain with UUID: ${domain_micro}"
-    #                         UUID_RESULT=$(curl -L4s "http://${domain_micro}/.well-known/acme-challenge/uuid.html")
-    #                         if [ "$UUID" == "$UUID_RESULT" ] ; then
-    #                             DOMAINONLINE="true";
-    #                             echo "Domain and uuid: valid"
-    #                         fi
-    #                     fi
-    #                     [[ ! -z ${DOMAINONLINE} ]] && sleep 3
-    #                     TRY=$((TRY+1))
-    #                 done
-    #             done
-    #             domain="${domain//,/ }"
-    #             # prevent empty domains
-    #             if [[ ! -z "${domain// }" ]]; then
-    #                 #dehydrated --cron --ipv4 --domain "$domain"
-    #                 acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
-        #                     --cert-file "/acme/certs/${domain}/cert.pem" --ca-file "/acme/certs/${domain}/chain.pem" \
-        #                     --fullchain-file "/acme/certs/${domain}/fullchain.pem" --key-file "/acme/certs/${domain}/privkey.pem" \
-        #                     -d "${domain}"
-    #             fi
-    #         done
-    #     else
-    #         #dehydrated --cron --ipv4 --domain "$ACME_DOMAINS"
-    #         acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
-        #             --cert-file "/acme/certs/${ACME_DOMAINS}/cert.pem" --ca-file "/acme/certs/${ACME_DOMAINS}/chain.pem" \
-        #             --fullchain-file "/acme/certs/${ACME_DOMAINS}/fullchain.pem" --key-file "/acme/certs/${ACME_DOMAINS}/privkey.pem" \
-        #             -d "${ACME_DOMAINS}"
-    #     fi
-    # fi
+  echo "/acme/domain_list.txt is missing/empty and ACME_DOMAINS is empty"
+  echo "Please use one of them to generate/update certificates"
 fi
 
 RESTART_DOCKER="no"

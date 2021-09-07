@@ -5,7 +5,8 @@
 # Copyright (c) Adrian Jon Kriel :: admin@extremeshok.com
 ################################################################################
 
-if [ ! -z "$NOTIFY" ] && [ ! -z "$SMTP_HOST" ] && [ ! -z "$SMTP_USER" ] && [ ! -z "$SMTP_PASS" ] ; then
+
+if [ ! -z "$SMTP_HOST" ] && [ ! -z "$SMTP_USER" ] && [ ! -z "$SMTP_PASS" ] ; then
     # Generating Remote SMTP config
     cat << EOF >> /etc/msmtprc
 defaults
