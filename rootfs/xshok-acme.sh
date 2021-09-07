@@ -17,8 +17,8 @@ shopt -s nocaseglob
 
 ######################### VARIABLES
 
-REGISTERED_EMAIL=${NOTIFY:-$REGISTERED_EMAIL}
 XS_REGISTERED_EMAIL="${REGISTERED_EMAIL:-admin@extremeshok.com}"
+XS_NOTIFY_EMAIL=${NOTIFY_EMAIL:-$XS_REGISTERED_EMAIL}
 XS_DEFAULT_CA="${DEFAULT_CA:-letsencrypt}"
 XS_ENABLE_STAGING="${ENABLE_STAGING:-no}"
 XS_ENABLE_DEBUG="${ENABLE_DEBUG:-no}"
@@ -29,7 +29,14 @@ XS_UPDATE_ACME="${UPDATE_ACME:-yes}"
 XS_RESTART_DOCKER="${RESTART_DOCKER:-no}"
 XS_RESTART_DOCKER_CONTAINERS="${ACME_RESTART_CONTAINERS:-}"
 XS_ACME_DOMAINS="${ACME_DOMAINS:-}"
+XS_NOTIFY="${NOTIFY:-no}"
 
+if [ "${XS_NOTIFY,,}" == "yes" ] || [ "${XS_NOTIFY,,}" == "true" ] || [ "${XS_NOTIFY,,}" == "on" ] || [ "${XS_NOTIFY}" == "1" ] ; then
+  export MAIL_TO="$XS_NOTIFY_EMAIL"
+  XS_NOTIFY="--notify-level 1 --notify-mode 1 --notify-hook mail"
+else
+  XS_NOTIFY=""
+fi
 if [ "${XS_ENABLE_STAGING,,}" == "yes" ] || [ "${XS_ENABLE_STAGING,,}" == "true" ] || [ "${XS_ENABLE_STAGING,,}" == "on" ] || [ "${XS_ENABLE_STAGING}" == "1" ] ; then
     XS_ENABLE_STAGING="--staging"
 else
@@ -186,7 +193,7 @@ if [ -s "/acme/domain_list.txt" ] ; then
 
                 fi
             done
-            acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+            acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG $XS_NOTIFY --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
                 --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
                 --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
                 -d "${parent_domain}" $add_domain
@@ -225,7 +232,7 @@ elif [[ ! -z $XS_ACME_DOMAINS ]]; then
 
             fi
         done
-        acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
+        acme.sh --issue $XS_ENABLE_STAGING $XS_ENABLE_DEBUG $XS_NOTIFY --cert-home "/acme/certs" --config-home "/acme" --webroot "/var/www" \
             --cert-file "/acme/certs/${parent_domain}/cert.pem" --ca-file "/acme/certs/${parent_domain}/chain.pem" \
             --fullchain-file "/acme/certs/${parent_domain}/fullchain.pem" --key-file "/acme/certs/${parent_domain}/privkey.pem" \
             -d "${parent_domain}" $add_domain

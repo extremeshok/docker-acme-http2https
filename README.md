@@ -19,9 +19,11 @@ View **docker-compose-sample.yml** in the source repository for usage
 * Support for both /certs and /var/www/vhosts directory layouts
 * Default to generate a 4096bit DHPARAM, Set GENERATE_DHPARAM=false to use the bundled 4096 dhparam
 * Generates a default /root/.rnd (fixes: Can't load /root/.rnd into RNG)
+* Optional Email notifications on failure with support for custom smtp server
 
 ## OPTIONS with defaults
 REGISTERED_EMAIL=admin@extremeshok.com
+NOTIFY_EMAIL=REGISTERED_EMAIL
 DEFAULT_CA=letsencrypt
 ENABLE_STAGING=no
 ENABLE_DEBUG=no
@@ -32,6 +34,7 @@ UPDATE_ACME=yes
 RESTART_DOCKER=no
 ACME_RESTART_CONTAINERS=
 ACME_DOMAINS=
+NOTIFY=no
 
 ### /certs dir
 If detected, will copy the certificates and keys to /certs/domain.com/
@@ -67,9 +70,10 @@ Note: will take a long time
 ### Disable checking of external IP connectivity
 SKIP_IP_CHECK=no
 
-# MAIL NOTIFICATIONS ARE CURRENTLY DISABLED
+# MAIL NOTIFICATIONS
 
 ## MAIL options with defaults
+NOTIFY=no
 NOTIFY=REGISTERED_EMAIL
 SMTP_HOST=
 SMTP_PORT=587
@@ -78,10 +82,11 @@ SMTP_PASS=
 
 ### Use an external SMTP server, default will use sendmail
 SMTP_HOST=smtp.domain.com
-
+SMTP_PORT=587
 SMTP_USER=user@domain.com
-
 SMTP_PASS=securepass
 
-### Notify via email on failure/success
- NOTIFY=admin@domain.com
+### To enable Notify via email on failure, set the email address to be notified
+### if not set NOTIFY_EMAIL will default to the REGISTERED_EMAIL
+NOTIFY=yes
+NOTIFY_EMAIL=your@domain.com
