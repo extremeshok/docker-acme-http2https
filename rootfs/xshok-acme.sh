@@ -66,9 +66,9 @@ function xshok_get_ipv4 () {
     local IPV4=""
     local IPV4_SRCS=("v4.ident.me" "ifconfig.co")
     local TRY=""
-    until [[ ! -z ${IPV4} ]] || [[ ${TRY} -ge 30 ]]; do
+    until [[ -n ${IPV4} ]] || [[ ${TRY} -ge 30 ]]; do
         local IPV4_SRC="${IPV4_SRCS[$RANDOM%${#IPV4_SRCS[@]}]}"
-        if [ ! -z "$(which curl 2> /dev/null)" ] ; then
+        if [ -n "$(which curl 2> /dev/null)" ] ; then
             IPV4="$(curl --connect-timeout 15 -m 15 -L4s "${IPV4_SRC}" 2> /dev/null | grep -E "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" | tr -d '\n' | tr -d '\r' | xargs)"
         else
             IPV4="$(wget -qO- --connect-timeout=15 --read-timeout=15 -4 "${IPV4_SRC}" 2> /dev/null | grep -E "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$" | tr -d '\n' | tr -d '\r' | xargs)"
@@ -77,7 +77,7 @@ function xshok_get_ipv4 () {
             #invalid IP returned, try again
             IPV4=""
         fi
-        [[ ! -z ${TRY} ]] && sleep 1
+        [[ -n ${TRY} ]] && sleep 1
         TRY=$((TRY+1))
     done
     echo "${IPV4}"
@@ -92,7 +92,7 @@ function xshok_verify_domain () { #domain
     else
         DOMAINONLINE=""
         TRY=0
-        until [[ ! -z ${DOMAINONLINE} ]] || [[ ${TRY} -ge 30 ]]; do
+        until [[ -n ${DOMAINONLINE} ]] || [[ ${TRY} -ge 30 ]]; do
             # Testing Localhost
             if curl --silent "http://127.0.0.1/" >/dev/null 2>&1 ; then
                 # Testing DOMAIN_NAME
@@ -167,7 +167,7 @@ if [ -s "/acme/domain_list.txt" ] ; then
     echo "-- Sign/renew new/changed/expiring certificates from /acme/domain_list.txt"
     #dehydrated --cron --ipv4
 
-    while read -r line; do
+    while read -r domain_line; do
         # reading each line
         #echo "$line"
         readarray -d " " -t strarr <<< "$domain_line"
@@ -202,7 +202,7 @@ if [ -s "/acme/domain_list.txt" ] ; then
     done < "/acme/domain_list.txt"
 
     # --deploy-hook <hookname>          The hook file to deploy cert
-elif [[ ! -z $XS_ACME_DOMAINS ]]; then
+elif [[ -n $XS_ACME_DOMAINS ]]; then
   echo "-- Sign/renew new/changed/expiring certificates from ACME_DOMAINS"
 
   #if [[ $XS_ACME_DOMAINS =~ [\,\;] ]]; then
@@ -284,14 +284,14 @@ fi
 ## restart docker containers if required
 if [ "${XS_RESTART_DOCKER,,}" == "yes" ] || [ "${XS_RESTART_DOCKER,,}" == "true" ] || [ "${XS_RESTART_DOCKER,,}" == "on" ] || [ "${XS_RESTART_DOCKER}" == "1" ] ; then
     if [ "$RESTART_DOCKER" == "yes" ] ; then
-        if [[ ! -z ${XS_RESTART_DOCKER_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
+        if [[ -n ${XS_RESTART_DOCKER_CONTAINERS} ]] && [ -f "/var/run/docker.sock" ] ; then
             echo "========== Restarting Docker Containers =========="
             if [[ $XS_RESTART_DOCKER_CONTAINERS =~ [\,\;] ]]; then
                 container_array=$(echo "$XS_RESTART_DOCKER_CONTAINERS" | tr ";" "\\n")
                 for container in $container_array ; do
                     #container="${container//,/ }"
                     # prevent empty domains
-                    if [[ ! -z "${container// }" ]]; then
+                    if [[ -n "${container// }" ]]; then
                         if DOCKER_COMMAND=$(docker restart "$container") ; then
                             echo "-- Restarted Docker Container: $container"
                         else
